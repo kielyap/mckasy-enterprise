@@ -22,7 +22,7 @@ export default function CRM() {
   `;
 
   const { register, handleSubmit, reset, setValue } = useForm<Partial<Customer>>();
-// ...existing useEffect...
+
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, 'customers'), 
       (snapshot) => {
@@ -35,7 +35,6 @@ export default function CRM() {
   }, []);
 
   const onSubmit = async (data: any) => {
-// ...existing onSubmit...
     try {
       if (editingCustomer) {
         await updateDoc(doc(db, 'customers', editingCustomer.id), data);
@@ -52,7 +51,6 @@ export default function CRM() {
   };
 
   const openModal = (customer?: Customer) => {
-// ...existing openModal...
     if (customer) {
       setEditingCustomer(customer);
       setValue('companyName', customer.companyName);

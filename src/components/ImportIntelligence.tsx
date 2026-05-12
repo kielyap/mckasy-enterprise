@@ -19,11 +19,25 @@ export default function ImportIntelligence({ collectionName, schemaDetails, onCo
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  const ai = React.useMemo(() => {
+    try {
+      // @ts-ignore - process might not be defined in all environments
+      const key = typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : undefined;
+      if (!key) return null;
+      return new GoogleGenAI({ apiKey: key });
+    } catch (e) {
+      return null;
+    }
+  }, []);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (!ai) {
+      setError("AI System is not configured. Please check your API keys.");
+      return;
+    }
 
     setIsAnalyzing(true);
     setError(null);

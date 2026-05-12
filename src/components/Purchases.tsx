@@ -26,7 +26,6 @@ export default function Purchases() {
   const { register, handleSubmit, reset } = useForm<Partial<Purchase>>();
 
   useEffect(() => {
-// ...existing useEffect logic...
     // Fetch suppliers for the dropdown
     const unsubSuppliers = onSnapshot(collection(db, 'suppliers'), (snap) => {
       setSuppliers(snap.docs.map(d => ({ id: d.id, ...d.data() } as Supplier)));
@@ -49,7 +48,6 @@ export default function Purchases() {
   }, []);
 
   const onSubmit = async (data: any) => {
-// ...existing onSubmit logic...
     try {
       const supplier = suppliers.find(s => s.id === data.supplierId);
       if (!supplier) return;
@@ -73,7 +71,6 @@ export default function Purchases() {
   };
 
   const deletePurchase = async (id: string) => {
-// ...existing delete logic...
     if (!window.confirm('Delete this purchase record?')) return;
     try {
       await deleteDoc(doc(db, 'purchases', id));
