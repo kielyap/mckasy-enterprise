@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
-import { db, collection, addDoc, serverTimestamp, handleFirestoreError, OperationType } from '../lib/firebase';
+import { db, collection, addDoc, serverTimestamp, handleFirestoreError, OperationType, Timestamp } from '../lib/firebase';
 import { Upload, FileSpreadsheet, X, Check, BrainCircuit, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -92,13 +92,29 @@ export default function ImportIntelligence({ collectionName, schemaDetails, onCo
 
     try {
       const colRef = collection(db, collectionName);
-      const promises = parsedData.map(item => 
-        addDoc(colRef, {
-          ...item,
+      const promises = parsedData.map(item => {
+        // Convert date strings to Firestore Timestamps
+        const processedItem = { ...item };
+        Object.keys(processedItem).forEach(key => {
+          const lowerKey = key.toLowerCase();
+          if (lowerKey.includes('date') && typeof processedItem[key] === 'string') {
+            try {
+              const dateVal = new Date(processedItem[key]);
+              if (!isNaN(dateVal.getTime())) {
+                processedItem[key] = Timestamp.fromDate(dateVal);
+              }
+            } catch (e) {
+              console.warn(`Failed to convert ${key} to date:`, processedItem[key]);
+            }
+          }
+        });
+
+        return addDoc(colRef, {
+          ...processedItem,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
-        })
-      );
+        });
+      });
       
       await Promise.all(promises);
       setIsOpen(false);

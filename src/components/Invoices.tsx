@@ -30,6 +30,7 @@ export default function Invoices() {
   const [detailItems, setDetailItems] = useState<InvoiceItem[]>([]);
 
   const invoiceSchema = `
+    - date (string, optional): Transaction date (YYYY-MM-DD or standard format)
     - customerName (string, required): Existing partner entity name (e.g. "ST. LUKE'S")
     - type (string, optional): "Invoice" or "Delivery Receipt" (default: "Delivery Receipt")
     - totalAmount (number, required): Gross sales amount (e.g. 50000.00)
