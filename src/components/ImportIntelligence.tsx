@@ -21,11 +21,12 @@ export default function ImportIntelligence({ collectionName, schemaDetails, onCo
 
   const ai = React.useMemo(() => {
     try {
-      // @ts-ignore - process might not be defined in all environments
-      const key = typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : undefined;
+      // @ts-ignore - process.env is injected by Vite at build time via define
+      const key = process.env.GEMINI_API_KEY;
       if (!key) return null;
       return new GoogleGenAI({ apiKey: key });
     } catch (e) {
+      console.error("Gemini init error:", e);
       return null;
     }
   }, []);

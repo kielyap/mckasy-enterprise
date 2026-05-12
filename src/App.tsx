@@ -14,6 +14,7 @@ import Invoices from './components/Invoices';
 import Deliveries from './components/Deliveries';
 import Purchases from './components/Purchases';
 import UserManagement from './components/UserManagement';
+import ErrorBoundary from './components/ErrorBoundary';
 import { Stethoscope, LogIn, ShieldAlert } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -96,7 +97,9 @@ function AppContent() {
 
   return (
     <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
-      {renderContent()}
+      <ErrorBoundary>
+        {renderContent()}
+      </ErrorBoundary>
     </Layout>
   );
 }
