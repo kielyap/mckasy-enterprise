@@ -7,12 +7,16 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useForm } from 'react-hook-form';
 import ImportIntelligence from './ImportIntelligence';
 
+import Pagination from './Pagination';
+
 export default function Purchases() {
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const purchaseSchema = `
     - date (string, required): Transaction date in YYYY-MM-DD or standard format
@@ -84,13 +88,39 @@ export default function Purchases() {
     reset();
   };
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
   const filteredPurchases = purchases.filter(p => 
-    p.supplierName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.orNo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.invoiceNo?.toLowerCase().includes(searchTerm.toLowerCase())
+    (p.supplierName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+    (p.orNo?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+    (p.invoiceNo?.toLowerCase() || '').includes(searchTerm.toLowerCase())
   );
 
-  const totalPurchaseAmount = filteredPurchases.reduce((sum, p) => sum + p.amount, 0);
+  const totalPages = Math.ceil(filteredPurchases.length / itemsPerPage);
+  const currentItems = filteredPurchases.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const totalPurchaseAmount = filteredPurchases.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+
+  const safeFormatDate = (dateField: any) => {
+    if (!dateField) return '---';
+    try {
+      if (typeof dateField.toDate === 'function') {
+        return format(dateField.toDate(), 'yyyy-MM-dd');
+      }
+      const d = new Date(dateField);
+      if (!isNaN(d.getTime())) {
+        return format(d, 'yyyy-MM-dd');
+      }
+    } catch (e) {
+      console.warn('Date formatting error:', e);
+    }
+    return 'Invalid Date';
+  };
 
   return (
     <div className="space-y-6">
@@ -146,13 +176,13 @@ export default function Purchases() {
               </tr>
             </thead>
             <tbody className="text-[11px] font-mono font-medium divide-y divide-[#141414]">
-              {filteredPurchases.map((purchase) => (
+              {currentItems.map((purchase) => (
                 <tr key={purchase.id} className="hover:bg-[#E4E3E0]/30 transition-colors group">
                   <td className="px-6 py-4 border-r border-[#141414]">
-                    {purchase.date ? format(purchase.date.toDate(), 'yyyy-MM-dd') : '---'}
+                    {safeFormatDate(purchase.date)}
                   </td>
                   <td className="px-6 py-4 border-r border-[#141414]">
-                    <p className="text-xs font-bold uppercase tracking-tighter">{purchase.supplierName}</p>
+                    <p className="text-xs font-bold uppercase tracking-tighter">{purchase.supplierName || 'Unknown Supplier'}</p>
                     {purchase.memo && <p className="text-[9px] opacity-40 mt-1 uppercase">{purchase.memo}</p>}
                   </td>
                   <td className="px-6 py-4 border-r border-[#141414] text-center font-bold">
@@ -183,6 +213,13 @@ export default function Purchases() {
               )}
             </tbody>
           </table>
+          <Pagination 
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={filteredPurchases.length}
+            itemsPerPage={itemsPerPage}
+            onPageChange={setCurrentPage}
+          />
         </div>
       </div>
 

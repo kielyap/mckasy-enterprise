@@ -6,11 +6,15 @@ import { useForm } from 'react-hook-form';
 import { motion, AnimatePresence } from 'motion/react';
 import ImportIntelligence from './ImportIntelligence';
 
+import Pagination from './Pagination';
+
 export default function CRM() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 9;
 
   const customerSchema = `
     - companyName (string, required): Full legal name of the hospital, clinic, or business
@@ -78,9 +82,19 @@ export default function CRM() {
     }
   };
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
   const filteredCustomers = customers.filter(c => 
-    c.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.contactName.toLowerCase().includes(searchTerm.toLowerCase())
+    (c.companyName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+    (c.contactName?.toLowerCase() || '').includes(searchTerm.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage);
+  const currentItems = filteredCustomers.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
   );
 
   return (
@@ -119,7 +133,7 @@ export default function CRM() {
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredCustomers.map((customer) => (
+          {currentItems.map((customer) => (
             <motion.div
               key={customer.id}
               layout
@@ -180,6 +194,14 @@ export default function CRM() {
             </motion.div>
           ))}
         </div>
+        
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filteredCustomers.length}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       {filteredCustomers.length === 0 && (

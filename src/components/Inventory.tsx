@@ -6,11 +6,15 @@ import { useForm } from 'react-hook-form';
 import { motion, AnimatePresence } from 'motion/react';
 import ImportIntelligence from './ImportIntelligence';
 
+import Pagination from './Pagination';
+
 export default function Inventory() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const productSchema = `
     - productNo (string, optional): Catalogue reference number (e.g. "01", "A-100")
@@ -90,8 +94,18 @@ export default function Inventory() {
     }
   };
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
   const filteredProducts = products.filter(p => 
-    p.itemName.toLowerCase().includes(searchTerm.toLowerCase())
+    (p.itemName?.toLowerCase() || '').includes(searchTerm.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const currentItems = filteredProducts.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
   );
 
   return (
@@ -144,7 +158,7 @@ export default function Inventory() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#141414]/10">
-                {filteredProducts.map((product) => (
+                {currentItems.map((product) => (
                   <tr key={product.id} className="hover:bg-[#E4E3E0]/30 transition-colors">
                     <td className="px-6 py-4 border-r border-[#141414]/10">
                       <span className="text-[10px] font-mono font-bold">{product.productNo || '---'}</span>
@@ -181,6 +195,13 @@ export default function Inventory() {
               </tbody>
             </table>
           </div>
+          <Pagination 
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={filteredProducts.length}
+            itemsPerPage={itemsPerPage}
+            onPageChange={setCurrentPage}
+          />
         </div>
       </div>
 

@@ -21,6 +21,8 @@ import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'motion/react';
 import ImportIntelligence from './ImportIntelligence';
 
+import Pagination from './Pagination';
+
 export default function Invoices() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -28,6 +30,9 @@ export default function Invoices() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [showInvoiceDetails, setShowInvoiceDetails] = useState<Invoice | null>(null);
   const [detailItems, setDetailItems] = useState<InvoiceItem[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
+  const itemsPerPage = 8;
 
   const invoiceSchema = `
     - date (string, optional): Transaction date (YYYY-MM-DD or standard format)
@@ -236,6 +241,22 @@ export default function Invoices() {
     setLineItems([{ productId: '', productNo: '', quantity: 1, unitPrice: 0, lineTotal: 0 }]);
   };
 
+  const filteredInvoices = invoices.filter(inv => 
+    (inv.customerName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+    (inv.invoiceNumber?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+    (inv.purchaseOrderNo?.toLowerCase() || '').includes(searchTerm.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredInvoices.length / itemsPerPage);
+  const currentItems = filteredInvoices.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
   return (
     <div className="space-y-6">
       <div className="p-8 border-b border-[#141414] bg-white flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
@@ -260,8 +281,19 @@ export default function Invoices() {
       </div>
 
       <div className="p-8 space-y-6">
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#141414] opacity-40" />
+          <input
+            type="text"
+            placeholder="FILTER BY CUSTOMER, INVOICE#, OR PO#..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full border-b-2 border-[#141414] bg-transparent py-4 pl-12 pr-4 text-sm font-bold uppercase tracking-tight focus:outline-none"
+          />
+        </div>
+
         <div className="grid gap-6">
-          {invoices.map((invoice) => {
+          {currentItems.map((invoice) => {
             const customer = customers.find(c => c.id === invoice.customerId);
             const isPaid = invoice.status === 'Paid';
             return (
@@ -337,7 +369,15 @@ export default function Invoices() {
           })}
         </div>
 
-        {invoices.length === 0 && (
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filteredInvoices.length}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+        />
+
+        {filteredInvoices.length === 0 && (
           <div className="py-20 text-center border border-dashed border-[#141414]/20">
             <FileText className="mx-auto h-12 w-12 opacity-10" />
             <p className="mt-4 text-[10px] font-bold uppercase opacity-40 italic">System Idle: Waiting for transactional data...</p>
