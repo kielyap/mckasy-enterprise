@@ -119,12 +119,9 @@ export default function Inventory() {
         return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
       }
       
-      const aStr = String(aValue).toLowerCase();
-      const bStr = String(bValue).toLowerCase();
-      
-      if (aStr < bStr) return sortOrder === 'asc' ? -1 : 1;
-      if (aStr > bStr) return sortOrder === 'asc' ? 1 : -1;
-      return 0;
+      return sortOrder === 'asc' 
+        ? String(aValue).localeCompare(String(bValue), undefined, { numeric: true, sensitivity: 'base' })
+        : String(bValue).localeCompare(String(aValue), undefined, { numeric: true, sensitivity: 'base' });
     });
 
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);

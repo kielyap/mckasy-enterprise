@@ -99,7 +99,9 @@ export default function Invoices() {
     );
     const unsubProducts = onSnapshot(collection(db, 'products'), 
       (snapshot) => {
-        setProducts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product)));
+        const sortedProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product))
+          .sort((a, b) => a.itemName.localeCompare(b.itemName));
+        setProducts(sortedProducts);
       },
       (error) => handleFirestoreError(error, OperationType.LIST, 'products')
     );
@@ -266,6 +268,20 @@ export default function Invoices() {
     setLineItems([{ productId: '', productNo: '', quantity: 1, unitPrice: 0, lineTotal: 0 }]);
   };
 
+  const markAsPaid = async (id: string) => {
+    try {
+      await updateDoc(doc(db, 'invoices', id), {
+        status: 'Paid',
+        updatedAt: serverTimestamp()
+      });
+      if (showInvoiceDetails && showInvoiceDetails.id === id) {
+        setShowInvoiceDetails({ ...showInvoiceDetails, status: 'Paid' });
+      }
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, `invoices/${id}`);
+    }
+  };
+
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, sortField, sortOrder]);
@@ -291,12 +307,9 @@ export default function Invoices() {
         return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
       }
       
-      const aStr = String(aValue || '').toLowerCase();
-      const bStr = String(bValue || '').toLowerCase();
-      
-      if (aStr < bStr) return sortOrder === 'asc' ? -1 : 1;
-      if (aStr > bStr) return sortOrder === 'asc' ? 1 : -1;
-      return 0;
+      return sortOrder === 'asc' 
+        ? String(aValue || '').localeCompare(String(bValue || ''), undefined, { numeric: true, sensitivity: 'base' })
+        : String(bValue || '').localeCompare(String(aValue || ''), undefined, { numeric: true, sensitivity: 'base' });
     });
 
   const totalPages = Math.ceil(filteredInvoices.length / itemsPerPage);
@@ -788,10 +801,20 @@ export default function Invoices() {
                 </div>
               </div>
               
-              <div className="p-4 bg-[#E4E3E0] flex justify-between print:hidden">
-                 <button onClick={() => window.print()} className="flex items-center gap-2 px-4 py-2 bg-[#141414] text-[#E4E3E0] text-[10px] font-bold uppercase">
-                    Print Document
-                 </button>
+              <div className="p-4 bg-[#E4E3E0] flex justify-between gap-4 print:hidden">
+                 <div className="flex gap-4">
+                  <button onClick={() => window.print()} className="flex items-center gap-2 px-4 py-2 bg-[#141414] text-[#E4E3E0] text-[10px] font-bold uppercase transition-all hover:opacity-90">
+                      Print Document
+                  </button>
+                  {showInvoiceDetails.status !== 'Paid' && (
+                    <button 
+                      onClick={() => markAsPaid(showInvoiceDetails.id)} 
+                      className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-[10px] font-bold uppercase transition-all hover:bg-emerald-700"
+                    >
+                      Mark as Paid
+                    </button>
+                  )}
+                 </div>
                  <button onClick={() => setShowInvoiceDetails(null)} className="px-4 py-2 border border-[#141414] text-[10px] font-bold uppercase transition-all hover:bg-white">
                     Close Record
                  </button>
