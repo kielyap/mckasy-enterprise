@@ -6,6 +6,8 @@ import {
   Truck, 
   Package, 
   FileText, 
+  ShoppingBag,
+  ShieldCheck,
   LogOut,
   Menu,
   X
@@ -19,28 +21,32 @@ interface LayoutProps {
 }
 
 export default function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
-  const { user, signOut } = useAuth();
+  const { user, appUser, isAdmin, signOut } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'customers', label: 'CRM', icon: Users },
     { id: 'suppliers', label: 'Suppliers', icon: Truck },
+    { id: 'purchases', label: 'Purchases', icon: ShoppingBag },
     { id: 'inventory', label: 'Inventory', icon: Package },
     { id: 'invoices', label: 'Invoices', icon: FileText },
     { id: 'deliveries', label: 'Deliveries', icon: Truck },
   ];
+
+  if (isAdmin) {
+    menuItems.push({ id: 'users', label: 'Authorizations', icon: ShieldCheck });
+  }
 
   return (
     <div className="min-h-screen bg-[#E4E3E0] font-sans text-[#141414] flex flex-col">
       {/* Header - Desktop & Mobile Hybrid */}
       <header className="sticky top-0 z-40 bg-white border-b border-[#141414] h-16 flex items-center justify-between px-6">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-[#141414] rounded-sm flex items-center justify-center">
+          <div className="w-8 h-8 bg-[#141414] rounded-sm flex items-center justify-center border border-[#141414]">
             <span className="text-[#E4E3E0] font-bold text-xs">ME</span>
           </div>
           <h1 className="text-xl font-bold tracking-tighter uppercase hidden sm:block">Mckasy Enterprise</h1>
-          <span className="text-[10px] font-mono border border-[#141414] px-1.5 py-0.5 ml-2 hidden md:block">B2B MEDICAL SUPPLY</span>
         </div>
 
         <nav className="hidden lg:flex gap-8 text-[11px] font-bold uppercase tracking-widest">
@@ -60,12 +66,14 @@ export default function Layout({ children, activeTab, setActiveTab }: LayoutProp
         </nav>
 
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-3 pr-4 border-r border-[#141414] hidden sm:flex">
-             <div className="text-right">
+          <div className="flex items-center gap-3 pr-4 border-r border-[#141414] hidden sm:flex text-right">
+             <div>
                 <p className="text-[10px] font-bold leading-none">{user?.displayName?.toUpperCase()}</p>
-                <p className="text-[9px] font-mono opacity-60 leading-none mt-1">OPERATOR</p>
+                <p className="text-[8px] font-mono opacity-60 leading-none mt-1 uppercase">
+                  {isAdmin ? 'System Admin' : appUser?.role === 'staff' ? 'Staff Member' : 'Operator'}
+                </p>
              </div>
-             <div className="w-8 h-8 rounded-full border border-[#141414] flex items-center justify-center font-bold text-[10px] overflow-hidden">
+             <div className="w-8 h-8 rounded-full border-2 border-[#141414] flex items-center justify-center font-bold text-[10px] overflow-hidden">
                 {user?.photoURL ? (
                     <img src={user.photoURL} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                 ) : (
@@ -75,7 +83,7 @@ export default function Layout({ children, activeTab, setActiveTab }: LayoutProp
           </div>
           <button 
             onClick={() => signOut()}
-            className="p-2 border border-[#141414] hover:bg-[#141414] hover:text-[#E4E3E0] transition-all"
+            className="p-2 border border-[#141414] hover:bg-[#141414] hover:text-[#E4E3E0] transition-all bg-white"
           >
             <LogOut className="h-4 w-4" />
           </button>

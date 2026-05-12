@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { db, collection, query, where, onSnapshot, auth, getDocs, addDoc, serverTimestamp, orderBy, limit, handleFirestoreError, OperationType } from '../lib/firebase';
+import { db, collection, query, where, onSnapshot, auth, getDocs, addDoc, serverTimestamp, orderBy, limit, handleFirestoreError, OperationType, Timestamp } from '../lib/firebase';
 import { Product, Invoice, Delivery } from '../types';
 import { AlertTriangle, TrendingUp, ChevronRight, FileText, Truck } from 'lucide-react';
 import { startOfMonth, format } from 'date-fns';
@@ -17,21 +17,20 @@ export default function Dashboard() {
   });
 
   const [inventoryValue, setInventoryValue] = useState(0);
+  const [totalPurchases, setTotalPurchases] = useState(0);
 
   useEffect(() => {
+    // Total Purchases listener
+    const unsubPurchases = onSnapshot(collection(db, 'purchases'), (snap) => {
+      const total = snap.docs.reduce((sum, doc) => sum + (doc.data().amount || 0), 0);
+      setTotalPurchases(total);
+    });
+
     const qLowStock = query(collection(db, 'products'), where('currentStock', '<', 10));
     const unsubscribeLowStock = onSnapshot(qLowStock, 
       (snapshot) => {
         const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
         setLowStockProducts(items);
-        
-        // Calculate total inventory value
-        let totalVal = 0;
-        snapshot.docs.forEach(doc => {
-          const p = doc.data() as Product;
-          totalVal += (p.currentStock || 0) * (p.purchasePrice || 0);
-        });
-        setInventoryValue(totalVal);
       },
       (error) => handleFirestoreError(error, OperationType.LIST, 'products_low_stock')
     );
@@ -93,6 +92,7 @@ export default function Dashboard() {
     );
 
     return () => {
+      unsubPurchases();
       unsubscribeLowStock();
       unsubscribeAllProducts();
       unsubscribeInvoices();
@@ -118,7 +118,8 @@ export default function Dashboard() {
         { productNo: '25', itemName: 'STERILE SURGICAL GLOVES 6.0', packaging: '50 PAIRS/BOX', purchasePrice: 490, sellingPrice: 800, currentStock: 3, minStock: 10, category: 'Medical Supply' },
         { productNo: '26', itemName: 'STERILE SURGICAL GLOVES 6.5', packaging: '50 PAIRS/BOX', purchasePrice: 490, sellingPrice: 800, currentStock: 11, minStock: 10, category: 'Medical Supply' },
         { productNo: '27', itemName: 'STERILE SURGICAL GLOVES 7.0', packaging: '50 PAIRS/BOX', purchasePrice: 490, sellingPrice: 800, currentStock: 12, minStock: 10, category: 'Medical Supply' },
-        { productNo: '66', itemName: 'LUBRICANT JELLY SACHET 5g', packaging: '100 PCS / BOX', purchasePrice: 450, sellingPrice: 595, currentStock: 100, minStock: 20, category: 'Medical Supply' }
+        { productNo: '66', itemName: 'LUBRICANT JELLY SACHET 5g', packaging: '100 PCS / BOX', purchasePrice: 450, sellingPrice: 595, currentStock: 100, minStock: 20, category: 'Medical Supply' },
+        { productNo: '03', itemName: 'ADULT DIAPER MEDIUM', packaging: 'PACK', purchasePrice: 180, sellingPrice: 290, currentStock: 10, minStock: 5, category: 'Medical Supply' },
       ];
 
       const pMap: {[key: string]: string} = {};
@@ -136,11 +137,11 @@ export default function Dashboard() {
       // 2. Seed Customers
       const customerRef = collection(db, 'customers');
       const sampleCustomers = [
-        { companyName: 'SAN JUAN DE DIOS HOSPITAL', contactName: 'Nanette', address: 'Roxas Blvd, Pasay City, MM', phone: '831-3459', email: 'procurement@sjddh.com' },
-        { companyName: 'PROVIDENCE HOSPITAL', contactName: 'Lanie Aquino', address: '1515 QUEZON AVE, QC, MM', phone: '02 85586999', email: 'purchasing@providencehospital.com.ph' },
+        { companyName: 'SAN JUAN DE DIOS HOSPITAL', contactName: 'Nanette', address: 'Roxa Blvd Pasay City', phone: '831-3459', email: 'procurement@sjddh.com' },
+        { companyName: 'PROVIDENCE HOSPITAL', contactName: 'Lanie Aquino', address: '1515 QUEZON AVE, QC', phone: '02 85586999', email: 'purchasing@providencehospital.com.ph' },
         { companyName: 'QUEEN MARY HELP OF CHRISTIANS HOSPITAL', contactName: 'SIR JOEY', address: 'MANILA EAST ROAD, CARDONA, RIZAL', phone: '0917 5521500', email: 'qmhch@gmail.com' },
         { companyName: 'MORONG DOCTORS HOSPITAL', contactName: 'MAM ANGIE', address: 'GOV MARTINEZ ST, MORONG, RIZAL', phone: '', email: 'morongdoctors@gmail.com' },
-        { companyName: 'MCU HOSPITAL', contactName: 'MAM CHARISSE', address: 'EDSA MONUMENTO, CALOOCAN CITY, MM', phone: '8313459', email: 'info@mcuhospital.org' }
+        { companyName: 'MCU HOSPITAL', contactName: 'MAM CHARISSE', address: 'EDSA MONUMENTO, CALOOCAN CITY', phone: '8313459', email: 'info@mcuhospital.org' }
       ];
 
       const cMap: {[key: string]: string} = {};
@@ -157,20 +158,51 @@ export default function Dashboard() {
 
       // 3. Seed Suppliers
       const supplierRef = collection(db, 'suppliers');
-      const sampleSuppliers = ['ALTCARE', 'INDOPLAS', 'PAGODA PHILS', 'MEDILOVE', 'DAILY', 'HOSPITECH', 'MACTYCOON', 'IMPEXCOS'];
+      const sampleSuppliers = ['ALTCARE', 'INDOPLAS', 'PAGODA PHILS', 'MEDILOVE', 'DAILY', 'HOSPITECH', 'MACTYCOON', 'IMPEXCOS', 'EMMAN MEDICAL SUPPLIES', 'MEDASIA MEDICAL PRODUCTS CORP', 'FELISHA MEDICAL SUPPLIES', 'APEX IMPORTS MARKETING CORP', 'STARCARE MEDICAL SUPPLIES', 'YANDC ENTERPRISE', 'GOLDENPACK PACKAGING SUPPLY INC'];
+      const sMap: {[key: string]: string} = {};
+      
       for (const sName of sampleSuppliers) {
         const q = query(supplierRef, where('supplierName', '==', sName));
         const snap = await getDocs(q);
         if (snap.empty) {
-          await addDoc(supplierRef, { supplierName: sName, contactInfo: 'Imported from legacy records.', createdAt: serverTimestamp() });
+          const doc = await addDoc(supplierRef, { supplierName: sName, contactInfo: 'Imported from legacy records.', createdAt: serverTimestamp() });
+          sMap[sName] = doc.id;
+        } else {
+          sMap[sName] = snap.docs[0].id;
+        }
+      }
+
+      // 3b. Seed Purchases (History of purchases to suppliers)
+      const purchaseRef = collection(db, 'purchases');
+      const samplePurchases = [
+        { date: new Date('2026-01-05'), supplier: 'MEDASIA MEDICAL PRODUCTS CORP', amount: 3500, or: '16378' },
+        { date: new Date('2026-01-05'), supplier: 'EMMAN MEDICAL SUPPLIES', amount: 3500, or: '19637', inv: '53838' },
+        { date: new Date('2026-01-06'), supplier: 'HOSPITECH MEDICAL SUPPLIES', amount: 5240, or: '2163' },
+        { date: new Date('2026-01-15'), supplier: 'APEX IMPORTS MARKETING CORP', amount: 24960, or: '46273' },
+        { date: new Date('2026-02-14'), supplier: 'EMMAN MEDICAL SUPPLIES', amount: 56580, or: '308', inv: '54989' },
+      ];
+
+      for (const p of samplePurchases) {
+        const q = query(purchaseRef, where('orNo', '==', p.or));
+        const snap = await getDocs(q);
+        if (snap.empty && sMap[p.supplier]) {
+           await addDoc(purchaseRef, {
+             date: Timestamp.fromDate(p.date),
+             supplierId: sMap[p.supplier],
+             supplierName: p.supplier,
+             amount: p.amount,
+             orNo: p.or,
+             invoiceNo: p.inv || '',
+             createdAt: serverTimestamp()
+           });
         }
       }
 
       // 4. Seed a few Invoices (DR 621 and INV 0806)
       const invoiceRef = collection(db, 'invoices');
       const sampleInvoices = [
-        { invoiceNumber: 'DR-000621', customer: 'MCU HOSPITAL', type: 'Delivery Receipt', totalAmount: 595, profit: 145, items: [{ productNo: '66', qty: 1, up: 595, cp: 450, name: 'LUBRICANT JELLY SACHET 5g' }] },
-        { invoiceNumber: 'INV-000806', customer: 'SAN JUAN DE DIOS HOSPITAL', type: 'Invoice', totalAmount: 117050, profit: 45000, items: [
+        { invoiceNumber: 'DR-000621', customer: 'MCU HOSPITAL', type: 'Delivery Receipt', totalAmount: 595, profit: 145, projectDescription: 'URGENT LUBRICANT RESTOCK', items: [{ productNo: '66', qty: 1, up: 595, cp: 450, name: 'LUBRICANT JELLY SACHET 5g' }] },
+        { invoiceNumber: 'INV-000806', customer: 'SAN JUAN DE DIOS HOSPITAL', type: 'Invoice', totalAmount: 117050, profit: 45000, projectDescription: 'PO 7067 - SURGICAL SUPPLIES', items: [
           { productNo: '27', qty: 50, up: 800, cp: 490, name: 'STERILE SURGICAL GLOVES 7.0' },
           { productNo: '06', qty: 40000, up: 2.2, cp: 1.5, name: 'EXAMINATION GLOVES MEDIUM' }
         ]}
@@ -184,15 +216,19 @@ export default function Dashboard() {
             invoiceNumber: inv.invoiceNumber,
             type: inv.type,
             customerId: cMap[inv.customer],
+            customerName: inv.customer,
+            projectDescription: inv.projectDescription,
             date: serverTimestamp(),
             status: 'Paid',
             totalAmount: inv.totalAmount,
             profit: inv.profit,
+            totalCost: inv.totalAmount - inv.profit,
             createdAt: serverTimestamp()
           });
 
           for (const item of inv.items) {
             await addDoc(collection(db, 'invoices', docRef.id, 'items'), {
+              productId: pMap[item.productNo],
               productNo: item.productNo,
               itemName: item.name,
               quantity: item.qty,
@@ -218,7 +254,7 @@ export default function Dashboard() {
       alert('CSV Data Synchronized successfully.');
     } catch (error) {
       console.error('Error seeding data:', error);
-      alert('Failed to sync data.');
+      handleFirestoreError(error, OperationType.WRITE, 'seeding_dashboard');
     } finally {
       setIsSeeding(false);
     }
@@ -257,6 +293,10 @@ export default function Dashboard() {
           <div className="flex flex-col">
             <span className="text-[10px] uppercase opacity-50 font-bold mb-1">Cost of Goods</span>
             <span className="font-mono text-sm font-bold">₱{monthlyStats.cost.toLocaleString()}</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[10px] uppercase opacity-50 font-bold mb-1">Total Purchases</span>
+            <span className="font-mono text-sm font-bold text-red-600">₱{totalPurchases.toLocaleString()}</span>
           </div>
           <div className="flex flex-col">
             <span className="text-[10px] uppercase opacity-50 font-bold mb-1">Documents</span>
@@ -351,16 +391,6 @@ export default function Dashboard() {
               </div>
             ))
           )}
-        </div>
-
-        <div className="mt-10 pt-6 border-t border-[#141414]/10 flex flex-col gap-3">
-          <button 
-            onClick={seedFromCSV}
-            disabled={isSeeding}
-            className="w-full border-2 border-[#141414] bg-transparent text-[#141414] py-3 text-[9px] font-bold uppercase tracking-widest hover:bg-[#141414] hover:text-[#E4E3E0] transition-all disabled:opacity-50"
-          >
-            {isSeeding ? 'Synchronizing Archive...' : 'Sync Legacy CSV Data'}
-          </button>
         </div>
       </section>
     </div>

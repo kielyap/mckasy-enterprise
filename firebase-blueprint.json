@@ -90,9 +90,42 @@
         "updatedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["invoiceId", "invoiceNumber", "customerId", "status"]
+    },
+    "Purchase": {
+      "title": "Purchase Record",
+      "description": "Inventory restock from a supplier",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string", "format": "date-time" },
+        "supplierId": { "type": "string" },
+        "supplierName": { "type": "string" },
+        "orNo": { "type": "string" },
+        "invoiceNo": { "type": "string" },
+        "amount": { "type": "number" },
+        "memo": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["date", "supplierId", "amount"]
+    },
+    "AppUser": {
+      "title": "Application User",
+      "description": "System authorized users and their roles",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "staff"] },
+        "isAuthorized": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "role", "isAuthorized"]
     }
   },
   "firestore": {
+    "users": {
+        "schema": "AppUser",
+        "description": "Central registry of authorized users"
+    },
     "/customers": {
       "schema": "Customer",
       "description": "List of hospitals and clinics"

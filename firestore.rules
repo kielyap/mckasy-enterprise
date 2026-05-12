@@ -9,11 +9,23 @@ service cloud.firestore {
 
     // Helper Primitives
     function isSignedIn() {
-      return request.auth != null && request.auth.token.email_verified == true;
+      return request.auth != null;
+    }
+
+    function isMasterAdmin() {
+      return isSignedIn() && request.auth.token.email == 'kielyap15@gmail.com';
+    }
+
+    function isAdmin() {
+      return isMasterAdmin() || (isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+    }
+
+    function isAuthorized() {
+      return isAdmin() || (isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAuthorized == true);
     }
 
     function isValidId(id) {
-      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+      return id is string && id.size() <= 128;
     }
 
     function incoming() {
@@ -28,8 +40,7 @@ service cloud.firestore {
 
     function isValidCustomer(data) {
       return data.companyName is string && data.companyName.size() > 0 && data.companyName.size() < 200
-        && data.contactName is string && data.contactName.size() > 0
-        && (data.get('email', '') == '' || data.email is string);
+        && data.contactName is string && data.contactName.size() > 0;
     }
 
     function isValidProduct(data) {
@@ -42,83 +53,114 @@ service cloud.firestore {
     function isValidInvoice(data) {
       return data.invoiceNumber is string && data.invoiceNumber.size() > 0
         && data.type in ['Invoice', 'Delivery Receipt']
-        && data.customerId is string && isValidId(data.customerId)
+        && data.customerId is string
         && data.totalAmount is number && data.totalAmount >= 0
         && data.status in ['Paid', 'Unpaid'];
     }
 
     function isValidInvoiceItem(data) {
-      return data.productId is string && isValidId(data.productId)
+      return data.productId is string
         && data.quantity is number && data.quantity > 0
         && data.unitPrice is number && data.unitPrice >= 0
         && data.lineTotal is number && data.lineTotal >= 0;
     }
 
     function isValidDelivery(data) {
-      return data.invoiceId is string && isValidId(data.invoiceId)
+      return data.invoiceId is string
         && data.invoiceNumber is string && data.invoiceNumber.size() > 0
-        && data.customerId is string && isValidId(data.customerId)
+        && data.customerId is string
         && data.status in ['Processing', 'Dispensing', 'In Transit', 'Delivered'];
     }
 
     // --- Rules ---
 
+    match /users/{userId} {
+      allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isSignedIn() && (request.auth.uid == userId)
+        && (
+          isMasterAdmin() || 
+          (incoming().isAuthorized == false && incoming().role == 'staff' && incoming().email == request.auth.token.email)
+        );
+      allow update: if (isAdmin() && incoming().role in ['admin', 'staff'])
+        || (isSignedIn() && request.auth.uid == userId && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'updatedAt']));
+      allow delete: if isAdmin() && get(/databases/$(database)/documents/users/$(userId)).data.email != 'kielyap15@gmail.com';
+    }
+
+    match /seeding_dashboard/{docId} {
+      allow read, write: if isAdmin();
+    }
+
     match /customers/{custId} {
-      allow get: if isSignedIn() && isValidId(custId);
-      allow list: if isSignedIn();
-      allow create: if isSignedIn() && isValidCustomer(incoming()) && incoming().createdAt == request.time;
-      allow update: if isSignedIn() && isValidCustomer(incoming());
-      allow delete: if isSignedIn();
+      allow get, list: if isAuthorized();
+      allow create: if isAuthorized() && isValidCustomer(incoming()) && incoming().createdAt == request.time;
+      allow update: if isAuthorized() && isValidCustomer(incoming());
+      allow delete: if isAdmin();
     }
 
     match /suppliers/{suppId} {
-      allow read: if isSignedIn();
-      allow write: if isSignedIn();
+      allow get, list: if isAuthorized();
+      allow write: if isAuthorized();
+      allow delete: if isAdmin();
+    }
+
+    match /purchases/{purId} {
+      function isValidPurchase(data) {
+        return data.date is timestamp
+          && data.supplierId is string
+          && data.amount is number && data.amount >= 0;
+      }
+      allow get, list: if isAuthorized();
+      allow create: if isAuthorized() && isValidPurchase(incoming());
+      allow update: if isAuthorized() && isValidPurchase(incoming());
+      allow delete: if isAdmin();
     }
 
     match /products/{prodId} {
-      allow get: if isSignedIn() && isValidId(prodId);
-      allow list: if isSignedIn();
-      allow create: if isSignedIn() && isValidProduct(incoming());
-      allow update: if isSignedIn() && (
+      allow get: if isAuthorized();
+      allow list: if isAuthorized();
+      allow create: if isAuthorized() && isValidProduct(incoming());
+      allow update: if isAuthorized() && (
         // Branch 1: General Edit
         (isValidProduct(incoming()) && incoming().itemName == existing().itemName) ||
         // Branch 2: Stock Deduction Action
         (incoming().diff(existing()).affectedKeys().hasOnly(['currentStock', 'updatedAt']) && incoming().currentStock is number)
       );
-      allow delete: if isSignedIn();
+      allow delete: if isAdmin();
     }
 
     match /invoices/{invId} {
-      allow get: if isSignedIn() && isValidId(invId);
-      allow list: if isSignedIn();
-      allow create: if isSignedIn() && isValidInvoice(incoming()) && incoming().createdAt == request.time;
-      allow update: if isSignedIn() && (
+      allow get: if isAuthorized();
+      allow list: if isAuthorized();
+      allow create: if isAuthorized() && isValidInvoice(incoming()) && incoming().createdAt == request.time;
+      allow update: if isAuthorized() && (
         // Allow status update to 'Paid' ONLY
         incoming().diff(existing()).affectedKeys().hasOnly(['status']) 
         && incoming().invoiceNumber == existing().invoiceNumber
         && incoming().customerId == existing().customerId
       );
+      allow delete: if isAdmin();
     }
 
     match /invoices/{invId}/items/{itemId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn() && (
+      allow read: if isAuthorized();
+      allow create: if isAuthorized() && (
         existsAfter(/databases/$(database)/documents/invoices/$(invId)) ||
         exists(/databases/$(database)/documents/invoices/$(invId))
       ) && isValidInvoiceItem(incoming());
+      allow delete: if isAdmin();
     }
 
     match /deliveries/{delId} {
-      allow get: if isSignedIn() && isValidId(delId);
-      allow list: if isSignedIn();
-      allow create: if isSignedIn() && isValidDelivery(incoming());
-      allow update: if isSignedIn() && (
+      allow get: if isAuthorized();
+      allow list: if isAuthorized();
+      allow create: if isAuthorized() && isValidDelivery(incoming());
+      allow update: if isAuthorized() && (
         // Action: Update Tracking Status or Location
         incoming().diff(existing()).affectedKeys().hasOnly(['status', 'location', 'updatedAt'])
         && isValidDelivery(incoming())
       );
-      allow delete: if isSignedIn();
+      allow delete: if isAdmin();
     }
   }
 }

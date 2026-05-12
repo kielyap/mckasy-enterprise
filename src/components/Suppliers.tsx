@@ -1,15 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { db, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, serverTimestamp, handleFirestoreError, OperationType } from '../lib/firebase';
 import { Supplier } from '../types';
-import { Plus, Search, Edit2, Trash2, Truck } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Truck, Upload } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { motion, AnimatePresence } from 'motion/react';
+import ImportIntelligence from './ImportIntelligence';
 
 export default function Suppliers() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+
+  const supplierSchema = `
+    - supplierName (string, required): Official name of the medical supplier/distributor
+    - contactInfo (string, optional): General contact information, notes, or branch details
+  `;
 
   const { register, handleSubmit, reset, setValue } = useForm<Partial<Supplier>>();
 
@@ -72,16 +78,23 @@ export default function Suppliers() {
     <div className="space-y-6">
       <div className="p-8 border-b border-[#141414] bg-white flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tighter uppercase leading-none">02 / Sourcing Registry</h2>
+          <h2 className="text-3xl font-bold tracking-tighter uppercase leading-none italic">02 / Sourcing Registry</h2>
           <p className="text-[10px] font-mono mt-2 opacity-50 uppercase tracking-widest leading-none">Medical Supply Chain Partners</p>
         </div>
-        <button 
-          onClick={() => openModal()}
-          className="flex items-center justify-center gap-2 border-2 border-[#141414] bg-[#141414] px-4 py-2 text-[10px] font-bold uppercase text-[#E4E3E0] hover:bg-transparent hover:text-[#141414] transition-all"
-        >
-          <Plus className="h-4 w-4" />
-          Register Supplier
-        </button>
+        <div className="flex gap-4">
+          <ImportIntelligence 
+            collectionName="suppliers" 
+            title="Suppliers" 
+            schemaDetails={supplierSchema} 
+          />
+          <button 
+            onClick={() => openModal()}
+            className="flex items-center justify-center gap-2 border-2 border-[#141414] bg-[#141414] px-4 py-2 text-[10px] font-bold uppercase text-[#E4E3E0] hover:bg-transparent hover:text-[#141414] transition-all"
+          >
+            <Plus className="h-4 w-4" />
+            Register Supplier
+          </button>
+        </div>
       </div>
 
       <div className="p-8 space-y-8">

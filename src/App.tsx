@@ -12,48 +12,68 @@ import Suppliers from './components/Suppliers';
 import Inventory from './components/Inventory';
 import Invoices from './components/Invoices';
 import Deliveries from './components/Deliveries';
-import { Stethoscope, LogIn } from 'lucide-react';
+import Purchases from './components/Purchases';
+import UserManagement from './components/UserManagement';
+import { Stethoscope, LogIn, ShieldAlert } from 'lucide-react';
 import { motion } from 'motion/react';
 
 function AppContent() {
-  const { user, signIn, loading } = useAuth();
+  const { user, signIn, loading, isAuthorized } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+      <div className="flex min-h-screen items-center justify-center bg-[#E4E3E0]">
+        <div className="h-10 w-10 animate-spin border-4 border-[#141414] border-t-transparent"></div>
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-100 p-4">
+      <div className="flex min-h-screen items-center justify-center bg-[#E4E3E0] p-4 text-[#141414]">
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="w-full max-w-md rounded-3xl bg-white p-8 text-center shadow-2xl"
+          className="w-full max-w-md border-4 border-[#141414] bg-white p-12 text-center shadow-[16px_16px_0px_0px_rgba(20,20,20,1)]"
         >
-          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-200">
+          <div className="mx-auto mb-8 flex h-20 w-20 items-center justify-center border-4 border-[#141414] bg-[#141414] text-[#E4E3E0]">
             <Stethoscope className="h-12 w-12" />
           </div>
-          <h1 className="mb-2 text-2xl font-bold tracking-tight text-slate-900">Mckasy Enterprise</h1>
-          <p className="mb-8 text-slate-500">Inventory & Invoicing Management System</p>
+          <h1 className="mb-2 text-3xl font-bold uppercase tracking-tighter italic">Mckasy Enterprise</h1>
+          <p className="mb-10 text-[10px] uppercase font-bold opacity-50 tracking-widest">Medical Supply Distribution System</p>
           
           <button 
             onClick={() => signIn()}
-            className="flex w-full items-center justify-center gap-3 rounded-xl bg-slate-900 px-6 py-4 font-bold text-white transition-all hover:bg-slate-800 active:scale-[0.98]"
+            className="flex w-full items-center justify-center gap-3 border-4 border-[#141414] bg-[#141414] px-6 py-4 text-xs font-bold uppercase text-[#E4E3E0] transition-all hover:bg-white hover:text-[#141414] active:scale-[0.98]"
           >
             <LogIn className="h-5 w-5" />
-            Sign in with Google
+            Authenticate via Google
           </button>
-          
-          <div className="mt-8 rounded-2xl bg-blue-50 p-4 text-left">
-            <p className="text-xs font-bold uppercase tracking-wider text-blue-600 mb-1">Developer Mode</p>
-            <p className="text-xs text-blue-700 leading-relaxed">
-              This system is built for B2B medical supply distribution. Use your Google account to access the dashboard.
-            </p>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (!isAuthorized) {
+    return (
+      <div className="min-h-screen bg-[#E4E3E0] flex items-center justify-center p-8">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-md w-full border-4 border-[#141414] bg-white p-12 text-center shadow-[16px_16px_0px_0px_rgba(20,20,20,1)]"
+        >
+          <div className="flex justify-center mb-8">
+            <div className="bg-red-50 p-4 border-2 border-red-500 rounded-full">
+                <ShieldAlert className="h-12 w-12 text-red-500" />
+            </div>
+          </div>
+          <h2 className="text-3xl font-bold uppercase tracking-tighter mb-4 italic">Access Denied</h2>
+          <p className="text-xs font-bold uppercase opacity-50 mb-8 leading-relaxed">
+            Your account is currently pending authorization. The master administrator must grant you access before you can proceed.
+          </p>
+          <div className="bg-[#141414] text-[#E4E3E0] p-4 text-[10px] font-mono font-bold uppercase overflow-hidden text-ellipsis border-2 border-red-500">
+            SEC_ERROR: UNAUTHORIZED_IDENTITY
           </div>
         </motion.div>
       </div>
@@ -68,6 +88,8 @@ function AppContent() {
       case 'inventory': return <Inventory />;
       case 'invoices': return <Invoices />;
       case 'deliveries': return <Deliveries />;
+      case 'purchases': return <Purchases />;
+      case 'users': return <UserManagement />;
       default: return <Dashboard />;
     }
   };

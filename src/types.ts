@@ -32,8 +32,23 @@ export interface Purchase {
   id: string;
   date: any;
   supplierId: string;
-  supplierInvoiceNo?: string;
-  totalAmount: number;
+  supplierName: string;
+  orNo?: string;
+  invoiceNo?: string;
+  amount: number;
+  memo?: string;
+  createdAt?: any;
+}
+
+export type UserRole = 'admin' | 'staff';
+
+export interface AppUser {
+  id: string;
+  email: string;
+  displayName: string;
+  role: UserRole;
+  isAuthorized: boolean;
+  updatedAt?: any;
 }
 
 export interface Invoice {
@@ -42,7 +57,12 @@ export interface Invoice {
   type: 'Invoice' | 'Delivery Receipt';
   date: any;
   customerId: string;
+  customerName?: string;
+  projectDescription?: string;
   purchaseOrderNo?: string;
+  taxRate?: number;
+  taxAmount?: number;
+  depositReceived?: number;
   totalAmount: number;
   status: 'Paid' | 'Unpaid';
   totalCost: number;

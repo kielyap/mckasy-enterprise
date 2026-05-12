@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { db, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, serverTimestamp, handleFirestoreError, OperationType } from '../lib/firebase';
 import { Customer } from '../types';
-import { Plus, Search, Edit2, Trash2, Users, Mail, Phone, MapPin, X } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Users, Mail, Phone, MapPin, X, Upload } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { motion, AnimatePresence } from 'motion/react';
+import ImportIntelligence from './ImportIntelligence';
 
 export default function CRM() {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -11,8 +12,17 @@ export default function CRM() {
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const { register, handleSubmit, reset, setValue } = useForm<Partial<Customer>>();
+  const customerSchema = `
+    - companyName (string, required): Full legal name of the hospital, clinic, or business
+    - contactName (string, required): Primary contact person at the company
+    - address (string, optional): Full physical address
+    - phone (string, optional): Primary telephone or mobile number
+    - email (string, optional): Official email address for billing/comms
+    - fax (string, optional): Fax number if available
+  `;
 
+  const { register, handleSubmit, reset, setValue } = useForm<Partial<Customer>>();
+// ...existing useEffect...
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, 'customers'), 
       (snapshot) => {
@@ -25,6 +35,7 @@ export default function CRM() {
   }, []);
 
   const onSubmit = async (data: any) => {
+// ...existing onSubmit...
     try {
       if (editingCustomer) {
         await updateDoc(doc(db, 'customers', editingCustomer.id), data);
@@ -41,6 +52,7 @@ export default function CRM() {
   };
 
   const openModal = (customer?: Customer) => {
+// ...existing openModal...
     if (customer) {
       setEditingCustomer(customer);
       setValue('companyName', customer.companyName);
@@ -77,16 +89,23 @@ export default function CRM() {
     <div className="space-y-6">
       <div className="p-8 border-b border-[#141414] bg-white flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tighter uppercase leading-none">03 / CRM Database</h2>
+          <h2 className="text-3xl font-bold tracking-tighter uppercase leading-none italic">03 / CRM Database</h2>
           <p className="text-[10px] font-mono mt-2 opacity-50 uppercase tracking-widest leading-none">Hospital & Clinic Partner Registry</p>
         </div>
-        <button 
-          onClick={() => openModal()}
-          className="flex items-center justify-center gap-2 border-2 border-[#141414] bg-[#141414] px-4 py-2 text-[10px] font-bold uppercase text-[#E4E3E0] hover:bg-transparent hover:text-[#141414] transition-all"
-        >
-          <Plus className="h-4 w-4" />
-          Add New Partner
-        </button>
+        <div className="flex gap-4">
+          <ImportIntelligence 
+            collectionName="customers" 
+            title="Partners" 
+            schemaDetails={customerSchema} 
+          />
+          <button 
+            onClick={() => openModal()}
+            className="flex items-center justify-center gap-2 border-2 border-[#141414] bg-[#141414] px-4 py-2 text-[10px] font-bold uppercase text-[#E4E3E0] hover:bg-transparent hover:text-[#141414] transition-all"
+          >
+            <Plus className="h-4 w-4" />
+            Add New Partner
+          </button>
+        </div>
       </div>
 
       <div className="p-8 space-y-8">

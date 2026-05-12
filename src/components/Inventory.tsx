@@ -1,15 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { db, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, serverTimestamp, handleFirestoreError, OperationType } from '../lib/firebase';
 import { Product } from '../types';
-import { Plus, Search, Edit2, Trash2, Package, X } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Package, X, Upload } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { motion, AnimatePresence } from 'motion/react';
+import ImportIntelligence from './ImportIntelligence';
 
 export default function Inventory() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+
+  const productSchema = `
+    - productNo (string, optional): Catalogue reference number (e.g. "01", "A-100")
+    - itemName (string, required): Full name of the medical item
+    - packaging (string, required): Unit description e.g. "Box of 100", "50ml Bottle"
+    - purchasePrice (number, required): Cost price per unit (e.g. 150.00)
+    - sellingPrice (number, required): Market price per unit (e.g. 200.00)
+    - currentStock (number, required): Current quantity on hand
+    - lowStockThreshold (number, optional): Minimum stock alert level (default 10)
+    - category (string, optional): Item group (e.g. "Medical Supply", "Equipment")
+  `;
 
   const { register, handleSubmit, reset, setValue } = useForm<Partial<Product>>();
 
@@ -86,16 +98,23 @@ export default function Inventory() {
     <div className="space-y-6">
       <div className="p-8 border-b border-[#141414] bg-white flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tighter uppercase leading-none">02 / Inventory Catalog</h2>
+          <h2 className="text-3xl font-bold tracking-tighter uppercase leading-none italic">02 / Inventory Catalog</h2>
           <p className="text-[10px] font-mono mt-2 opacity-50 uppercase tracking-widest leading-none">Medical Supply Stock & Pricing Control</p>
         </div>
-        <button 
-          onClick={() => openModal()}
-          className="flex items-center justify-center gap-2 border-2 border-[#141414] bg-[#141414] px-4 py-2 text-[10px] font-bold uppercase text-[#E4E3E0] hover:bg-transparent hover:text-[#141414] transition-all"
-        >
-          <Plus className="h-4 w-4" />
-          Add New Product
-        </button>
+        <div className="flex gap-4">
+          <ImportIntelligence 
+            collectionName="products" 
+            title="Catalogue" 
+            schemaDetails={productSchema} 
+          />
+          <button 
+            onClick={() => openModal()}
+            className="flex items-center justify-center gap-2 border-2 border-[#141414] bg-[#141414] px-4 py-2 text-[10px] font-bold uppercase text-[#E4E3E0] hover:bg-transparent hover:text-[#141414] transition-all"
+          >
+            <Plus className="h-4 w-4" />
+            Add New Product
+          </button>
+        </div>
       </div>
 
       <div className="p-8 space-y-8">
