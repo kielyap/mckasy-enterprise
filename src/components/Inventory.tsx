@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, serverTimestamp, handleFirestoreError, OperationType } from '../lib/firebase';
 import { Product } from '../types';
-import { Plus, Search, Edit2, Trash2, Package, X, Upload } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Package, X, Upload, ChevronUp, ChevronDown } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { motion, AnimatePresence } from 'motion/react';
 import ImportIntelligence from './ImportIntelligence';
@@ -14,6 +14,8 @@ export default function Inventory() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortField, setSortField] = useState<keyof Product>('itemName');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const itemsPerPage = 10;
 
   const productSchema = `
@@ -98,9 +100,32 @@ export default function Inventory() {
     setCurrentPage(1);
   }, [searchTerm]);
 
-  const filteredProducts = products.filter(p => 
-    (p.itemName?.toLowerCase() || '').includes(searchTerm.toLowerCase())
-  );
+  const handleSort = (field: keyof Product) => {
+    if (field === sortField) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
+  const filteredProducts = products
+    .filter(p => (p.itemName?.toLowerCase() || '').includes(searchTerm.toLowerCase()))
+    .sort((a, b) => {
+      const aValue = a[sortField] || '';
+      const bValue = b[sortField] || '';
+      
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
+      }
+      
+      const aStr = String(aValue).toLowerCase();
+      const bStr = String(bValue).toLowerCase();
+      
+      if (aStr < bStr) return sortOrder === 'asc' ? -1 : 1;
+      if (aStr > bStr) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
 
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
   const currentItems = filteredProducts.slice(
@@ -148,12 +173,36 @@ export default function Inventory() {
             <table className="w-full text-left text-sm border-collapse">
               <thead className="bg-[#141414] text-[#E4E3E0] text-[9px] font-bold tracking-widest uppercase">
                 <tr>
-                  <th className="px-6 py-3 border-r border-[#E4E3E0]/20">ID#</th>
-                  <th className="px-6 py-3 border-r border-[#E4E3E0]/20">Item Name</th>
-                  <th className="px-6 py-3 border-r border-[#E4E3E0]/20">Packaging</th>
-                  <th className="px-6 py-3 border-r border-[#E4E3E0]/20">Cost</th>
-                  <th className="px-6 py-3 border-r border-[#E4E3E0]/20">Price</th>
-                  <th className="px-6 py-3 border-r border-[#E4E3E0]/20">Stock</th>
+                  <th className="px-6 py-3 border-r border-[#E4E3E0]/20 cursor-pointer hover:bg-[#141414]/80 transition-colors" onClick={() => handleSort('productNo')}>
+                    <div className="flex items-center gap-1">
+                      ID# {sortField === 'productNo' && (sortOrder === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
+                    </div>
+                  </th>
+                  <th className="px-6 py-3 border-r border-[#E4E3E0]/20 cursor-pointer hover:bg-[#141414]/80 transition-colors" onClick={() => handleSort('itemName')}>
+                    <div className="flex items-center gap-1">
+                      Item Name {sortField === 'itemName' && (sortOrder === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
+                    </div>
+                  </th>
+                  <th className="px-6 py-3 border-r border-[#E4E3E0]/20 cursor-pointer hover:bg-[#141414]/80 transition-colors" onClick={() => handleSort('packaging')}>
+                    <div className="flex items-center gap-1">
+                      Packaging {sortField === 'packaging' && (sortOrder === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
+                    </div>
+                  </th>
+                  <th className="px-6 py-3 border-r border-[#E4E3E0]/20 cursor-pointer hover:bg-[#141414]/80 transition-colors" onClick={() => handleSort('purchasePrice')}>
+                    <div className="flex items-center gap-1">
+                      Cost {sortField === 'purchasePrice' && (sortOrder === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
+                    </div>
+                  </th>
+                  <th className="px-6 py-3 border-r border-[#E4E3E0]/20 cursor-pointer hover:bg-[#141414]/80 transition-colors" onClick={() => handleSort('sellingPrice')}>
+                    <div className="flex items-center gap-1">
+                      Price {sortField === 'sellingPrice' && (sortOrder === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
+                    </div>
+                  </th>
+                  <th className="px-6 py-3 border-r border-[#E4E3E0]/20 cursor-pointer hover:bg-[#141414]/80 transition-colors" onClick={() => handleSort('currentStock')}>
+                    <div className="flex items-center gap-1">
+                      Stock {sortField === 'currentStock' && (sortOrder === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
+                    </div>
+                  </th>
                   <th className="px-6 py-3 text-center">Actions</th>
                 </tr>
               </thead>

@@ -16,7 +16,7 @@ import {
   OperationType
 } from '../lib/firebase';
 import { Invoice, InvoiceItem, Customer, Product } from '../types';
-import { Plus, Search, FileText, ChevronRight, X, User, ShoppingBag, Terminal, Trash2, Upload } from 'lucide-react';
+import { Plus, Search, FileText, ChevronRight, X, User, ShoppingBag, Terminal, Trash2, Upload, ChevronUp, ChevronDown, Filter } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'motion/react';
 import ImportIntelligence from './ImportIntelligence';
@@ -32,6 +32,8 @@ export default function Invoices() {
   const [detailItems, setDetailItems] = useState<InvoiceItem[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortField, setSortField] = useState<keyof Invoice>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const itemsPerPage = 8;
 
   const invoiceSchema = `
@@ -264,21 +266,44 @@ export default function Invoices() {
     setLineItems([{ productId: '', productNo: '', quantity: 1, unitPrice: 0, lineTotal: 0 }]);
   };
 
-  const filteredInvoices = invoices.filter(inv => 
-    (inv.customerName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-    (inv.invoiceNumber?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-    (inv.purchaseOrderNo?.toLowerCase() || '').includes(searchTerm.toLowerCase())
-  );
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, sortField, sortOrder]);
+
+  const filteredInvoices = invoices
+    .filter(inv => 
+      (inv.customerName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (inv.invoiceNumber?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (inv.purchaseOrderNo?.toLowerCase() || '').includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => {
+      let aValue = a[sortField];
+      let bValue = b[sortField];
+
+      // Handle dates specifically
+      if (sortField === 'date') {
+        const aDate = aValue instanceof Timestamp ? aValue.toMillis() : 0;
+        const bDate = bValue instanceof Timestamp ? bValue.toMillis() : 0;
+        return sortOrder === 'asc' ? aDate - bDate : bDate - aDate;
+      }
+      
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
+      }
+      
+      const aStr = String(aValue || '').toLowerCase();
+      const bStr = String(bValue || '').toLowerCase();
+      
+      if (aStr < bStr) return sortOrder === 'asc' ? -1 : 1;
+      if (aStr > bStr) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
 
   const totalPages = Math.ceil(filteredInvoices.length / itemsPerPage);
   const currentItems = filteredInvoices.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm]);
 
   return (
     <div className="space-y-6">
@@ -304,15 +329,37 @@ export default function Invoices() {
       </div>
 
       <div className="p-8 space-y-6">
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#141414] opacity-40" />
-          <input
-            type="text"
-            placeholder="FILTER BY CUSTOMER, INVOICE#, OR PO#..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full border-b-2 border-[#141414] bg-transparent py-4 pl-12 pr-4 text-sm font-bold uppercase tracking-tight focus:outline-none"
-          />
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#141414] opacity-40" />
+            <input
+              type="text"
+              placeholder="FILTER BY CUSTOMER, INVOICE#, OR PO#..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full border-b-2 border-[#141414] bg-transparent py-4 pl-12 pr-4 text-sm font-bold uppercase tracking-tight focus:outline-none"
+            />
+          </div>
+          <div className="flex items-center gap-2 px-4 py-2 bg-white border border-[#141414]">
+            <Filter className="h-3 w-3 opacity-40" />
+            <select 
+              value={sortField}
+              onChange={(e) => setSortField(e.target.value as keyof Invoice)}
+              className="text-[10px] font-bold uppercase tracking-widest bg-transparent focus:outline-none cursor-pointer"
+            >
+              <option value="date">Sort By: Date</option>
+              <option value="customerName">Sort By: Customer</option>
+              <option value="totalAmount">Sort By: Amount</option>
+              <option value="status">Sort By: Status</option>
+              <option value="invoiceNumber">Sort By: Invoice#</option>
+            </select>
+            <button 
+              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+              className="p-1 hover:bg-[#E4E3E0] transition-colors border-l border-[#141414]/10 ml-1"
+            >
+              {sortOrder === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+            </button>
+          </div>
         </div>
 
         <div className="grid gap-6">

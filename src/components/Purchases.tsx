@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, handleFirestoreError, OperationType, Timestamp, deleteDoc, doc } from '../lib/firebase';
 import { Purchase, Supplier } from '../types';
-import { Plus, Search, ShoppingBag, Trash2, Calendar, FileText, Hash, Upload } from 'lucide-react';
+import { Plus, Search, ShoppingBag, Trash2, Calendar, FileText, Hash, Upload, ChevronUp, ChevronDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'motion/react';
 import { useForm } from 'react-hook-form';
@@ -16,6 +16,8 @@ export default function Purchases() {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortField, setSortField] = useState<keyof Purchase>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const itemsPerPage = 10;
 
   const purchaseSchema = `
@@ -90,13 +92,45 @@ export default function Purchases() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm]);
+  }, [searchTerm, sortField, sortOrder]);
 
-  const filteredPurchases = purchases.filter(p => 
-    (p.supplierName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-    (p.orNo?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-    (p.invoiceNo?.toLowerCase() || '').includes(searchTerm.toLowerCase())
-  );
+  const handleSort = (field: keyof Purchase) => {
+    if (field === sortField) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
+  const filteredPurchases = purchases
+    .filter(p => 
+      (p.supplierName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (p.orNo?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (p.invoiceNo?.toLowerCase() || '').includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => {
+      let aValue = a[sortField];
+      let bValue = b[sortField];
+
+      // Handle dates specifically
+      if (sortField === 'date') {
+        const aDate = aValue instanceof Timestamp ? aValue.toMillis() : new Date(aValue as string).getTime();
+        const bDate = bValue instanceof Timestamp ? bValue.toMillis() : new Date(bValue as string).getTime();
+        return sortOrder === 'asc' ? aDate - bDate : bDate - aDate;
+      }
+      
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
+      }
+      
+      const aStr = String(aValue || '').toLowerCase();
+      const bStr = String(bValue || '').toLowerCase();
+      
+      if (aStr < bStr) return sortOrder === 'asc' ? -1 : 1;
+      if (aStr > bStr) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
 
   const totalPages = Math.ceil(filteredPurchases.length / itemsPerPage);
   const currentItems = filteredPurchases.slice(
@@ -167,11 +201,31 @@ export default function Purchases() {
           <table className="w-full border-collapse text-left">
             <thead>
               <tr className="bg-[#141414] text-[#E4E3E0] text-[10px] font-bold uppercase tracking-widest">
-                <th className="px-6 py-4 border-r border-[#E4E3E0]/10">Date</th>
-                <th className="px-6 py-4 border-r border-[#E4E3E0]/10">Supplier / Vendor</th>
-                <th className="px-6 py-4 border-r border-[#E4E3E0]/10 text-center">OR NO.</th>
-                <th className="px-6 py-4 border-r border-[#E4E3E0]/10 text-center">Inv No.</th>
-                <th className="px-6 py-4 text-right">Amount</th>
+                <th className="px-6 py-4 border-r border-[#E4E3E0]/10 cursor-pointer hover:bg-[#141414]/80 transition-colors" onClick={() => handleSort('date')}>
+                    <div className="flex items-center gap-1">
+                        Date {sortField === 'date' && (sortOrder === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
+                    </div>
+                </th>
+                <th className="px-6 py-4 border-r border-[#E4E3E0]/10 cursor-pointer hover:bg-[#141414]/80 transition-colors" onClick={() => handleSort('supplierName')}>
+                    <div className="flex items-center gap-1">
+                        Supplier / Vendor {sortField === 'supplierName' && (sortOrder === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
+                    </div>
+                </th>
+                <th className="px-6 py-4 border-r border-[#E4E3E0]/10 text-center cursor-pointer hover:bg-[#141414]/80 transition-colors" onClick={() => handleSort('orNo')}>
+                    <div className="flex items-center justify-center gap-1">
+                        OR NO. {sortField === 'orNo' && (sortOrder === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
+                    </div>
+                </th>
+                <th className="px-6 py-4 border-r border-[#E4E3E0]/10 text-center cursor-pointer hover:bg-[#141414]/80 transition-colors" onClick={() => handleSort('invoiceNo')}>
+                    <div className="flex items-center justify-center gap-1">
+                        Inv No. {sortField === 'invoiceNo' && (sortOrder === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
+                    </div>
+                </th>
+                <th className="px-6 py-4 text-right cursor-pointer hover:bg-[#141414]/80 transition-colors" onClick={() => handleSort('amount')}>
+                    <div className="flex items-center justify-end gap-1">
+                        Amount {sortField === 'amount' && (sortOrder === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
+                    </div>
+                </th>
                 <th className="px-6 py-4 text-center w-16"></th>
               </tr>
             </thead>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, serverTimestamp, handleFirestoreError, OperationType } from '../lib/firebase';
 import { Supplier } from '../types';
-import { Plus, Search, Edit2, Trash2, Truck, Upload } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Truck, Upload, ChevronUp, ChevronDown } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { motion, AnimatePresence } from 'motion/react';
 import ImportIntelligence from './ImportIntelligence';
@@ -11,6 +11,8 @@ export default function Suppliers() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortField, setSortField] = useState<keyof Supplier>('supplierName');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   const supplierSchema = `
     - supplierName (string, required): Official name of the medical supplier/distributor
@@ -70,9 +72,28 @@ export default function Suppliers() {
     }
   };
 
-  const filteredSuppliers = suppliers.filter(s => 
-    s.supplierName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleSort = (field: keyof Supplier) => {
+    if (field === sortField) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
+  const filteredSuppliers = suppliers
+    .filter(s => s.supplierName.toLowerCase().includes(searchTerm.toLowerCase()))
+    .sort((a, b) => {
+      const aValue = a[sortField] || '';
+      const bValue = b[sortField] || '';
+      
+      const aStr = String(aValue).toLowerCase();
+      const bStr = String(bValue).toLowerCase();
+      
+      if (aStr < bStr) return sortOrder === 'asc' ? -1 : 1;
+      if (aStr > bStr) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
 
   return (
     <div className="space-y-6">
@@ -113,7 +134,11 @@ export default function Suppliers() {
           <table className="w-full border-collapse text-left">
             <thead>
               <tr className="bg-[#141414] text-[#E4E3E0] text-[10px] font-bold uppercase tracking-widest">
-                <th className="px-6 py-4 border-r border-[#E4E3E0]/10">Entity Name</th>
+                <th className="px-6 py-4 border-r border-[#E4E3E0]/10 cursor-pointer hover:bg-[#141414]/80 transition-colors" onClick={() => handleSort('supplierName')}>
+                    <div className="flex items-center gap-1">
+                        Entity Name {sortField === 'supplierName' && (sortOrder === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
+                    </div>
+                </th>
                 <th className="px-6 py-4 border-r border-[#E4E3E0]/10">Registry Records / Contact Details</th>
                 <th className="px-6 py-4 text-center">Utility</th>
               </tr>

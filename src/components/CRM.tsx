@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, serverTimestamp, handleFirestoreError, OperationType } from '../lib/firebase';
 import { Customer } from '../types';
-import { Plus, Search, Edit2, Trash2, Users, Mail, Phone, MapPin, X, Upload } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Users, Mail, Phone, MapPin, X, Upload, ChevronUp, ChevronDown, Filter } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { motion, AnimatePresence } from 'motion/react';
 import ImportIntelligence from './ImportIntelligence';
@@ -14,6 +14,8 @@ export default function CRM() {
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortField, setSortField] = useState<keyof Customer>('companyName');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const itemsPerPage = 9;
 
   const customerSchema = `
@@ -84,12 +86,24 @@ export default function CRM() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm]);
+  }, [searchTerm, sortField, sortOrder]);
 
-  const filteredCustomers = customers.filter(c => 
-    (c.companyName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-    (c.contactName?.toLowerCase() || '').includes(searchTerm.toLowerCase())
-  );
+  const filteredCustomers = customers
+    .filter(c => 
+      (c.companyName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (c.contactName?.toLowerCase() || '').includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => {
+      const aValue = a[sortField] || '';
+      const bValue = b[sortField] || '';
+      
+      const aStr = String(aValue).toLowerCase();
+      const bStr = String(bValue).toLowerCase();
+      
+      if (aStr < bStr) return sortOrder === 'asc' ? -1 : 1;
+      if (aStr > bStr) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
 
   const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage);
   const currentItems = filteredCustomers.slice(
@@ -121,15 +135,35 @@ export default function CRM() {
       </div>
 
       <div className="p-8 space-y-8">
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#141414] opacity-40" />
-          <input
-            type="text"
-            placeholder="SEARCH PARTNERS..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full border-b-2 border-[#141414] bg-transparent py-4 pl-12 pr-4 text-sm font-bold uppercase tracking-tight focus:outline-none"
-          />
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#141414] opacity-40" />
+            <input
+              type="text"
+              placeholder="SEARCH PARTNERS..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full border-b-2 border-[#141414] bg-transparent py-4 pl-12 pr-4 text-sm font-bold uppercase tracking-tight focus:outline-none"
+            />
+          </div>
+          <div className="flex items-center gap-2 px-4 py-2 bg-white border border-[#141414]">
+            <Filter className="h-3 w-3 opacity-40" />
+            <select 
+              value={sortField}
+              onChange={(e) => setSortField(e.target.value as keyof Customer)}
+              className="text-[10px] font-bold uppercase tracking-widest bg-transparent focus:outline-none cursor-pointer"
+            >
+              <option value="companyName">Sort By: Name</option>
+              <option value="contactName">Sort By: Contact</option>
+              <option value="createdAt">Sort By: Newest</option>
+            </select>
+            <button 
+              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+              className="p-1 hover:bg-[#E4E3E0] transition-colors border-l border-[#141414]/10 ml-1"
+            >
+              {sortOrder === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+            </button>
+          </div>
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
