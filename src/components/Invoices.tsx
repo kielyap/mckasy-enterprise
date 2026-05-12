@@ -48,11 +48,34 @@ export default function Invoices() {
   // Form State
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [invoiceType, setInvoiceType] = useState<'Invoice' | 'Delivery Receipt'>('Delivery Receipt');
+  const [invoiceNumber, setInvoiceNumber] = useState('');
   const [poNumber, setPoNumber] = useState('');
   const [projectDescription, setProjectDescription] = useState('');
   const [lineItems, setLineItems] = useState<Partial<InvoiceItem>[]>([
     { productId: '', productNo: '', quantity: 1, unitPrice: 0, lineTotal: 0 }
   ]);
+
+  // Suggest next invoice number
+  useEffect(() => {
+    if (isFormOpen && !invoiceNumber) {
+      const generateNextId = () => {
+        if (invoices.length === 0) return `INV-0001`;
+        
+        // Find the latest number from invoices
+        const lastInvoice = [...invoices].sort((a, b) => {
+          const numA = parseInt(a.invoiceNumber.replace(/\D/g, '') || '0');
+          const numB = parseInt(b.invoiceNumber.replace(/\D/g, '') || '0');
+          return numB - numA;
+        })[0];
+
+        const lastNum = lastInvoice ? parseInt(lastInvoice.invoiceNumber.replace(/\D/g, '') || '0') : 0;
+        const nextNum = (lastNum + 1).toString().padStart(4, '0');
+        const prefix = invoiceType === 'Invoice' ? 'INV' : 'DR';
+        return `${prefix}-${nextNum}`;
+      };
+      setInvoiceNumber(generateNextId());
+    }
+  }, [isFormOpen, invoices, invoiceType]);
 
   useEffect(() => {
     const unsubInvoices = onSnapshot(collection(db, 'invoices'), 
@@ -142,11 +165,10 @@ export default function Invoices() {
     }
 
     const batch = writeBatch(db);
-    const invoiceId = `INV-${Date.now()}`;
     const invoiceRef = doc(collection(db, 'invoices'));
 
     const invoiceData = {
-      invoiceNumber: invoiceId,
+      invoiceNumber: invoiceNumber,
       type: invoiceType,
       date: serverTimestamp(),
       customerId: selectedCustomerId,
@@ -192,7 +214,7 @@ export default function Invoices() {
       const customer = customers.find(c => c.id === selectedCustomerId);
       batch.set(deliveryRef, {
         invoiceId: invoiceRef.id,
-        invoiceNumber: invoiceId,
+        invoiceNumber: invoiceNumber,
         customerId: selectedCustomerId,
         customerName: customer?.companyName || 'UNKNOWN',
         status: 'Processing',
@@ -236,6 +258,7 @@ export default function Invoices() {
   const resetForm = () => {
     setSelectedCustomerId('');
     setInvoiceType('Delivery Receipt');
+    setInvoiceNumber('');
     setPoNumber('');
     setProjectDescription('');
     setLineItems([{ productId: '', productNo: '', quantity: 1, unitPrice: 0, lineTotal: 0 }]);
@@ -261,7 +284,7 @@ export default function Invoices() {
     <div className="space-y-6">
       <div className="p-8 border-b border-[#141414] bg-white flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tighter uppercase leading-none italic">04 / Sales & Billing</h2>
+          <h2 className="text-3xl font-bold tracking-tighter uppercase leading-none italic">Sales & Billing</h2>
           <p className="text-[10px] font-mono mt-2 opacity-50 uppercase tracking-widest leading-none">Revenue Stream & Stock Reconcile</p>
         </div>
         <div className="flex gap-4">
@@ -317,7 +340,7 @@ export default function Invoices() {
                   </div>
                 </div>
                 <div className="flex flex-row sm:flex-col items-end justify-between sm:justify-center gap-3 text-right">
-                  <p className="text-lg font-bold font-mono tracking-tighter">₱{invoice.totalAmount.toLocaleString()}</p>
+                  <p className="text-lg font-bold font-mono tracking-tighter">₱{(invoice.totalAmount || 0).toLocaleString()}</p>
                   <div className="flex items-center gap-3">
                       <span className="text-[9px] font-mono opacity-40 uppercase">{invoice.date ? format(invoice.date.toDate(), 'yyyy-MM-dd') : 'PENDING'}</span>
                       <span className={`text-[9px] font-bold px-2 py-0.5 border border-[#141414] uppercase leading-none ${isPaid ? 'bg-emerald-500 text-white' : 'bg-transparent text-[#141414]'}`}>
@@ -406,7 +429,7 @@ export default function Invoices() {
               <div className="flex items-center justify-between border-b border-[#141414] bg-white p-8">
                 <div>
                     <h3 className="text-2xl font-bold uppercase tracking-tighter">New Registry Entry</h3>
-                    <p className="text-[10px] font-mono font-bold opacity-40">AUTOGEN ID: INV-{Date.now().toString().slice(-6)}</p>
+                    <p className="text-[10px] font-mono font-bold opacity-40">System Sequence: {invoiceNumber}</p>
                 </div>
                 <button onClick={() => setIsFormOpen(false)} className="border border-[#141414] p-1.5 hover:bg-[#141414] hover:text-[#E4E3E0] transition-all">
                   <X className="h-5 w-5" />
@@ -416,6 +439,16 @@ export default function Invoices() {
               <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-8 space-y-10 custom-scrollbar">
                 {/* Header Info */}
                 <div className="grid gap-8 sm:grid-cols-2">
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-mono font-bold uppercase opacity-50 block">Document Ref No.</label>
+                    <input 
+                      type="text"
+                      value={invoiceNumber}
+                      onChange={(e) => setInvoiceNumber(e.target.value.toUpperCase())}
+                      className="w-full border-2 border-[#141414] bg-white p-3 text-xs font-bold uppercase tracking-tight focus:outline-none focus:bg-[#E4E3E0]/20"
+                      placeholder="INV-XXXX"
+                    />
+                  </div>
                   <div className="space-y-3">
                     <label className="text-[10px] font-mono font-bold uppercase opacity-50 block">Document Type</label>
                     <select 
@@ -509,7 +542,7 @@ export default function Invoices() {
                         </div>
                         <div className="col-span-5 lg:col-span-3">
                           <label className="text-[8px] font-mono font-bold uppercase opacity-40 mb-1 block">Calculated Line Total</label>
-                          <p className="p-2 text-xs font-mono font-bold text-[#141414]">₱{item.lineTotal?.toLocaleString()}</p>
+                          <p className="p-2 text-xs font-mono font-bold text-[#141414]">₱{(item.lineTotal || 0).toLocaleString()}</p>
                         </div>
                         <div className="col-span-3 lg:col-span-1 flex justify-end pb-1.5">
                            <button type="button" onClick={() => removeLineItem(index)} className="p-2 border border-[#141414] hover:bg-red-500 hover:text-white transition-all">
@@ -526,15 +559,15 @@ export default function Invoices() {
                 <div className="mb-8 space-y-3">
                   <div className="flex justify-between text-[10px] font-mono uppercase opacity-50">
                     <span>Gross Revenue Total</span>
-                    <span>₱{totalAmount.toLocaleString()}</span>
+                    <span>₱{(totalAmount || 0).toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-[10px] font-mono uppercase text-emerald-400">
                     <span>Projected Operational Profit</span>
-                    <span className="font-bold underline underline-offset-4">₱{totalProfit.toLocaleString()}</span>
+                    <span className="font-bold underline underline-offset-4">₱{(totalProfit || 0).toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between items-baseline pt-2">
                     <span className="text-[12px] font-bold uppercase tracking-widest">Total Payable</span>
-                    <span className="text-3xl font-bold font-mono tracking-tighter">₱{totalAmount.toLocaleString()}</span>
+                    <span className="text-3xl font-bold font-mono tracking-tighter">₱{(totalAmount || 0).toLocaleString()}</span>
                   </div>
                 </div>
                 <button 
@@ -650,8 +683,8 @@ export default function Invoices() {
                             <td className="px-4 py-3 border-r border-[#141414]/10 uppercase">{item.productNo || '---'}</td>
                             <td className="px-4 py-3 border-r border-[#141414]/10 uppercase font-bold">{item.itemName}</td>
                             <td className="px-4 py-3 border-r border-[#141414]/10 text-center">{item.quantity}</td>
-                            <td className="px-4 py-3 border-r border-[#141414]/10 text-right">₱{item.unitPrice.toLocaleString()}</td>
-                            <td className="px-4 py-3 text-right">₱{item.lineTotal.toLocaleString()}</td>
+                            <td className="px-4 py-3 border-r border-[#141414]/10 text-right">₱{(item.unitPrice || 0).toLocaleString()}</td>
+                            <td className="px-4 py-3 text-right">₱{(item.lineTotal || 0).toLocaleString()}</td>
                           </tr>
                         ))}
                         {detailItems.length === 0 && (
@@ -679,24 +712,24 @@ export default function Invoices() {
                   <div className="text-right space-y-2">
                     <div className="flex justify-between gap-20 text-[10px] font-mono uppercase opacity-60">
                       <span>Total Sales</span>
-                      <span>₱{showInvoiceDetails.totalAmount.toLocaleString()}</span>
+                      <span>₱{(showInvoiceDetails.totalAmount || 0).toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between gap-20 text-[10px] font-mono uppercase opacity-60">
                       <span>Percentage Tax (1%)</span>
-                      <span>₱{(showInvoiceDetails.totalAmount * 0.01).toLocaleString()}</span>
+                      <span>₱{(showInvoiceDetails.totalAmount * 0.01 || 0).toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between gap-20 text-[10px] font-mono uppercase opacity-60 italic">
                       <span>Amount: Net of Tax</span>
-                      <span>₱{(showInvoiceDetails.totalAmount * 0.99).toLocaleString()}</span>
+                      <span>₱{(showInvoiceDetails.totalAmount * 0.99 || 0).toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between gap-20 text-sm border-t border-[#141414] pt-2 mt-2 font-bold">
                       <span className="uppercase">Total Amount Due</span>
-                      <span className="font-mono">₱{(showInvoiceDetails.totalAmount).toLocaleString()}</span>
+                      <span className="font-mono">₱{(showInvoiceDetails.totalAmount || 0).toLocaleString()}</span>
                     </div>
                     {showInvoiceDetails.depositReceived ? (
                       <div className="flex justify-between gap-20 text-[10px] font-mono uppercase text-emerald-600">
                         <span>Deposit Received</span>
-                        <span>-₱{showInvoiceDetails.depositReceived.toLocaleString()}</span>
+                        <span>-₱{(showInvoiceDetails.depositReceived || 0).toLocaleString()}</span>
                       </div>
                     ) : (
                        <div className="flex justify-between gap-20 text-[10px] font-mono uppercase opacity-40">

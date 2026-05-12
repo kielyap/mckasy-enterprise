@@ -112,7 +112,7 @@ export default function Inventory() {
     <div className="space-y-6">
       <div className="p-8 border-b border-[#141414] bg-white flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tighter uppercase leading-none italic">02 / Inventory Catalog</h2>
+          <h2 className="text-3xl font-bold tracking-tighter uppercase leading-none italic">Inventory Catalog</h2>
           <p className="text-[10px] font-mono mt-2 opacity-50 uppercase tracking-widest leading-none">Medical Supply Stock & Pricing Control</p>
         </div>
         <div className="flex gap-4">
@@ -169,8 +169,8 @@ export default function Inventory() {
                     <td className="px-6 py-4 border-r border-[#141414]/10">
                         <span className="text-[10px] font-mono opacity-60 uppercase">{product.packaging}</span>
                     </td>
-                    <td className="px-6 py-4 border-r border-[#141414]/10 font-mono text-xs">₱{product.purchasePrice.toLocaleString()}</td>
-                    <td className="px-6 py-4 border-r border-[#141414]/10 font-mono font-bold">₱{product.sellingPrice.toLocaleString()}</td>
+                    <td className="px-6 py-4 border-r border-[#141414]/10 font-mono text-xs">₱{(product.purchasePrice || 0).toLocaleString()}</td>
+                    <td className="px-6 py-4 border-r border-[#141414]/10 font-mono font-bold">₱{(product.sellingPrice || 0).toLocaleString()}</td>
                     <td className="px-6 py-4 border-r border-[#141414]/10">
                       <span className={`inline-flex items-center px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest border ${
                         product.currentStock < (product.lowStockThreshold || 10) 
@@ -234,24 +234,24 @@ export default function Inventory() {
                     <input {...register('productNo')} className="w-full border-2 border-[#141414] bg-transparent px-4 py-3 text-sm font-mono font-bold uppercase focus:bg-[#E4E3E0] focus:outline-none transition-all placeholder:opacity-20" placeholder="e.g. 66" />
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-[10px] font-mono font-bold uppercase tracking-widest text-[#141414] opacity-50 mb-1.5">01 / Item Nomenclature</label>
+                    <label className="block text-[10px] font-mono font-bold uppercase tracking-widest text-[#141414] opacity-50 mb-1.5">Item Nomenclature</label>
                     <input {...register('itemName', { required: true })} className="w-full border-2 border-[#141414] bg-transparent px-4 py-3 text-sm font-bold uppercase focus:bg-[#E4E3E0] focus:outline-none transition-all placeholder:opacity-20" placeholder="e.g. STERILE GLOVES" />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-mono font-bold uppercase tracking-widest text-[#141414] opacity-50 mb-1.5">02 / Unit Packaging</label>
+                  <label className="block text-[10px] font-mono font-bold uppercase tracking-widest text-[#141414] opacity-50 mb-1.5">Unit Packaging</label>
                   <input {...register('packaging', { required: true })} className="w-full border-2 border-[#141414] bg-transparent px-4 py-3 text-sm font-bold uppercase focus:bg-[#E4E3E0] focus:outline-none" placeholder="e.g. PACK OF 50" />
                 </div>
                 <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-[10px] font-mono font-bold uppercase tracking-widest text-[#141414] opacity-50 mb-1.5">03 / Purchase Price</label>
+                    <label className="block text-[10px] font-mono font-bold uppercase tracking-widest text-[#141414] opacity-50 mb-1.5">Purchase Price</label>
                     <div className="relative">
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 font-mono text-xs font-bold">₱</span>
                         <input type="number" {...register('purchasePrice', { required: true })} className="w-full border-2 border-[#141414] bg-transparent pl-8 pr-4 py-3 text-sm font-mono font-bold focus:bg-[#E4E3E0] focus:outline-none" placeholder="0.00" />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-[10px] font-mono font-bold uppercase tracking-widest text-[#141414] opacity-50 mb-1.5">04 / Selling Price</label>
+                    <label className="block text-[10px] font-mono font-bold uppercase tracking-widest text-[#141414] opacity-50 mb-1.5">Selling Price</label>
                     <div className="relative">
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 font-mono text-xs font-bold">₱</span>
                         <input type="number" {...register('sellingPrice', { required: true })} className="w-full border-2 border-[#141414] bg-transparent pl-8 pr-4 py-3 text-sm font-mono font-bold focus:bg-[#E4E3E0] focus:outline-none" placeholder="0.00" />
@@ -260,11 +260,11 @@ export default function Inventory() {
                 </div>
                 <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-[10px] font-mono font-bold uppercase tracking-widest text-[#141414] opacity-50 mb-1.5">05 / Initial Qty</label>
+                    <label className="block text-[10px] font-mono font-bold uppercase tracking-widest text-[#141414] opacity-50 mb-1.5">Initial Qty</label>
                     <input type="number" {...register('currentStock', { required: true })} className="w-full border-2 border-[#141414] bg-transparent px-4 py-3 text-sm font-mono font-bold focus:bg-[#E4E3E0] focus:outline-none" placeholder="0" />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-mono font-bold uppercase tracking-widest text-[#141414] opacity-50 mb-1.5">06 / Alert Threshold</label>
+                    <label className="block text-[10px] font-mono font-bold uppercase tracking-widest text-[#141414] opacity-50 mb-1.5">Alert Threshold</label>
                     <input type="number" {...register('lowStockThreshold')} className="w-full border-2 border-[#141414] bg-transparent px-4 py-3 text-sm font-mono font-bold focus:bg-[#E4E3E0] focus:outline-none" placeholder="10" />
                   </div>
                 </div>

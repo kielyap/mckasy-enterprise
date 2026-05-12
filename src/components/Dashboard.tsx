@@ -13,17 +13,30 @@ export default function Dashboard() {
     revenue: 0,
     profit: 0,
     cost: 0,
+    purchases: 0,
     invoiceCount: 0
   });
 
   const [inventoryValue, setInventoryValue] = useState(0);
-  const [totalPurchases, setTotalPurchases] = useState(0);
+  const [allTimePurchases, setAllTimePurchases] = useState(0);
 
   useEffect(() => {
-    // Total Purchases listener
-    const unsubPurchases = onSnapshot(collection(db, 'purchases'), (snap) => {
-      const total = snap.docs.reduce((sum, doc) => sum + (doc.data().amount || 0), 0);
-      setTotalPurchases(total);
+    const startOfCurrentMonth = startOfMonth(new Date());
+
+    // All Time Purchases listener (for overall investment record)
+    const unsubAllPurchases = onSnapshot(collection(db, 'purchases'), (snap) => {
+      const total = snap.docs.reduce((sum, doc) => sum + (Number(doc.data().amount) || 0), 0);
+      setAllTimePurchases(total);
+    });
+
+    // Monthly Purchases listener
+    const qMonthlyPurchases = query(
+      collection(db, 'purchases'),
+      where('date', '>=', startOfCurrentMonth)
+    );
+    const unsubMonthlyPurchases = onSnapshot(qMonthlyPurchases, (snap) => {
+      const total = snap.docs.reduce((sum, doc) => sum + (Number(doc.data().amount) || 0), 0);
+      setMonthlyStats(prev => ({ ...prev, purchases: total }));
     });
 
     const qLowStock = query(collection(db, 'products'), where('currentStock', '<', 10));
@@ -48,7 +61,6 @@ export default function Dashboard() {
       (error) => handleFirestoreError(error, OperationType.LIST, 'products_all')
     );
 
-    const startOfCurrentMonth = startOfMonth(new Date());
     const qInvoices = query(
       collection(db, 'invoices'),
       where('date', '>=', startOfCurrentMonth)
@@ -61,16 +73,21 @@ export default function Dashboard() {
         let cost = 0;
         snapshot.docs.forEach(doc => {
           const data = doc.data() as Invoice;
-          revenue += data.totalAmount;
-          profit += data.profit || 0;
-          cost += data.totalCost || 0;
+          const docRevenue = Number(data.totalAmount) || 0;
+          const docProfit = Number(data.profit) || 0;
+          const docCost = Number(data.totalCost) || (docRevenue - docProfit);
+          
+          revenue += docRevenue;
+          profit += docProfit;
+          cost += docCost;
         });
-        setMonthlyStats({
+        setMonthlyStats(prev => ({
+          ...prev,
           revenue,
           profit,
           cost,
           invoiceCount: snapshot.docs.length
-        });
+        }));
       },
       (error) => handleFirestoreError(error, OperationType.LIST, 'invoices_monthly')
     );
@@ -92,7 +109,8 @@ export default function Dashboard() {
     );
 
     return () => {
-      unsubPurchases();
+      unsubAllPurchases();
+      unsubMonthlyPurchases();
       unsubscribeLowStock();
       unsubscribeAllProducts();
       unsubscribeInvoices();
@@ -261,46 +279,55 @@ export default function Dashboard() {
   };
 
   const margin = monthlyStats.revenue > 0 ? (monthlyStats.profit / monthlyStats.revenue) * 100 : 0;
+  const netCashFlow = monthlyStats.revenue - monthlyStats.purchases;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-12 auto-rows-min gap-0">
       {/* 01 / Analytics */}
       <section className="col-span-1 md:col-span-8 border-r border-b border-[#141414] p-8 flex flex-col justify-between bg-white min-h-[300px]">
         <div className="flex justify-between items-start">
-          <h2 className="text-[11px] font-mono uppercase opacity-50 tracking-widest">01 / Monthly Profit Analytics</h2>
-          <span className="text-[10px] bg-[#141414] text-[#E4E3E0] px-2 py-1 uppercase font-bold">Live Data</span>
+          <h2 className="text-[11px] font-mono uppercase opacity-50 tracking-widest">Monthly Profit Analytics</h2>
+          <span className="text-[10px] bg-[#141414] text-[#E4E3E0] px-2 py-1 uppercase font-bold">Financial Health</span>
         </div>
         
         <div className="flex flex-col gap-2 my-8">
           <span className="text-6xl md:text-8xl font-light tracking-tighter leading-none">
-            ₱{monthlyStats.profit.toLocaleString()}
+            ₱{(monthlyStats.profit || 0).toLocaleString()}
           </span>
-          <div className="flex items-center gap-2">
-            <span className="text-emerald-600 text-xs font-mono font-bold uppercase tracking-tight">+ {margin.toFixed(1)}% MARGIN</span>
-            <span className="text-[10px] opacity-40 uppercase font-bold tracking-widest">Current Month</span>
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2">
+              <span className="text-emerald-600 text-xs font-mono font-bold uppercase tracking-tight">+ {margin.toFixed(1)}% MARGIN</span>
+              <span className="text-[10px] opacity-40 uppercase font-bold tracking-widest">Sales Profit</span>
+            </div>
+            <div className="flex items-center gap-2 border-l border-[#141414] pl-6">
+               <span className={`text-xs font-mono font-bold uppercase tracking-tight ${netCashFlow >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                 ₱{(netCashFlow || 0).toLocaleString()}
+               </span>
+               <span className="text-[10px] opacity-40 uppercase font-bold tracking-widest">Net Cash Flow (Rev - Pur)</span>
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-4 gap-8 border-t border-[#141414] pt-6">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-6 border-t border-[#141414] pt-6">
           <div className="flex flex-col">
-            <span className="text-[10px] uppercase opacity-50 font-bold mb-1">Revenue</span>
-            <span className="font-mono text-sm font-bold">₱{monthlyStats.revenue.toLocaleString()}</span>
+            <span className="text-[10px] uppercase opacity-50 font-bold mb-1">Monthly Rev.</span>
+            <span className="font-mono text-sm font-bold">₱{(monthlyStats.revenue || 0).toLocaleString()}</span>
           </div>
           <div className="flex flex-col">
-            <span className="text-[10px] uppercase opacity-50 font-bold mb-1">Stock Value</span>
-            <span className="font-mono text-sm font-bold text-blue-600">₱{inventoryValue.toLocaleString()}</span>
+            <span className="text-[10px] uppercase opacity-50 font-bold mb-1">Inventory Value</span>
+            <span className="font-mono text-sm font-bold text-blue-600">₱{(inventoryValue || 0).toLocaleString()}</span>
           </div>
           <div className="flex flex-col">
-            <span className="text-[10px] uppercase opacity-50 font-bold mb-1">Cost of Goods</span>
-            <span className="font-mono text-sm font-bold">₱{monthlyStats.cost.toLocaleString()}</span>
+            <span className="text-[10px] uppercase opacity-50 font-bold mb-1">Cost of Sales</span>
+            <span className="font-mono text-sm font-bold">₱{(monthlyStats.cost || 0).toLocaleString()}</span>
           </div>
           <div className="flex flex-col">
-            <span className="text-[10px] uppercase opacity-50 font-bold mb-1">Total Purchases</span>
-            <span className="font-mono text-sm font-bold text-red-600">₱{totalPurchases.toLocaleString()}</span>
+            <span className="text-[10px] uppercase opacity-50 font-bold mb-1">Monthly Purchases</span>
+            <span className="font-mono text-sm font-bold text-red-600">₱{(monthlyStats.purchases || 0).toLocaleString()}</span>
           </div>
           <div className="flex flex-col">
-            <span className="text-[10px] uppercase opacity-50 font-bold mb-1">Documents</span>
-            <span className="font-mono text-sm font-bold">{monthlyStats.invoiceCount} Invoiced</span>
+            <span className="text-[10px] uppercase opacity-50 font-bold mb-1">Vol / Count</span>
+            <span className="font-mono text-sm font-bold">{(monthlyStats.invoiceCount || 0)} DR/INV</span>
           </div>
         </div>
       </section>
@@ -308,7 +335,7 @@ export default function Dashboard() {
       {/* 02 / Critical Alerts */}
       <section className="col-span-1 md:col-span-4 border-b border-[#141414] p-8 bg-[#141414] text-[#E4E3E0]">
         <div className="flex justify-between items-start mb-8">
-          <h2 className="text-[11px] font-mono uppercase opacity-50 text-[#E4E3E0]">02 / Low Stock Alerts</h2>
+          <h2 className="text-[11px] font-mono uppercase opacity-50 text-[#E4E3E0]">Low Stock Alerts</h2>
           <span className="text-[10px] border border-[#E4E3E0] px-2 py-1 font-bold">CRITICAL</span>
         </div>
         
@@ -327,16 +354,12 @@ export default function Dashboard() {
             ))
           )}
         </div>
-
-        <button className="w-full mt-12 border border-[#E4E3E0] py-3 text-[10px] uppercase font-bold hover:bg-[#E4E3E0] hover:text-[#141414] transition-all">
-          Generate Supply Restock Report
-        </button>
       </section>
 
       {/* 03 / Recent Invoices */}
       <section className="col-span-1 md:col-span-6 border-r border-[#141414] p-8 bg-white">
         <div className="flex justify-between items-start mb-8">
-          <h2 className="text-[11px] font-mono uppercase opacity-50">03 / Recent Transaction History</h2>
+          <h2 className="text-[11px] font-mono uppercase opacity-50">Recent Transaction History</h2>
           <FileText className="h-4 w-4 opacity-30" />
         </div>
         
@@ -354,7 +377,7 @@ export default function Dashboard() {
                   <p className="text-[10px] font-mono opacity-50 uppercase">{inv.date ? format(inv.date.toDate(), 'MMM dd, yyyy') : '---'}</p>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="font-bold font-mono text-sm leading-none">₱{inv.totalAmount.toLocaleString()}</p>
+                  <p className="font-bold font-mono text-sm leading-none">₱{(inv.totalAmount || 0).toLocaleString()}</p>
                   <p className={`text-[9px] font-bold uppercase mt-1 ${inv.status === 'Paid' ? 'text-emerald-500' : 'text-amber-500'}`}>
                     {inv.status}
                   </p>
@@ -368,7 +391,7 @@ export default function Dashboard() {
       {/* 04 / Delivery Tracker Preview */}
       <section className="col-span-1 md:col-span-6 p-8 bg-[#E4E3E0]">
         <div className="flex justify-between items-start mb-8">
-          <h2 className="text-[11px] font-mono uppercase opacity-50 text-[#141414]">04 / Logistics Tracking Preview</h2>
+          <h2 className="text-[11px] font-mono uppercase opacity-50 text-[#141414]">Logistics Tracking Preview</h2>
           <Truck className="h-4 w-4 opacity-30" />
         </div>
 

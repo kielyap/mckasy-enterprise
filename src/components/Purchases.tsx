@@ -126,13 +126,13 @@ export default function Purchases() {
     <div className="space-y-6">
       <div className="p-8 border-b border-[#141414] bg-white flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tighter uppercase leading-none italic">03 / Purchase History</h2>
+          <h2 className="text-3xl font-bold tracking-tighter uppercase leading-none italic">Purchase History</h2>
           <p className="text-[10px] font-mono mt-2 opacity-50 uppercase tracking-widest leading-none">Supplier Acquisitions & Expense Ledger</p>
         </div>
         <div className="flex items-center gap-4">
             <div className="px-4 py-2 border-2 border-[#141414] bg-[#E4E3E0] flex flex-col justify-center">
                 <span className="text-[8px] font-bold opacity-50 uppercase">Total Procurement</span>
-                <span className="text-sm font-mono font-bold">₱{totalPurchaseAmount.toLocaleString()}</span>
+                <span className="text-sm font-mono font-bold">₱{(totalPurchaseAmount || 0).toLocaleString()}</span>
             </div>
             <div className="flex gap-2">
                 <ImportIntelligence 
@@ -192,7 +192,7 @@ export default function Purchases() {
                     {purchase.invoiceNo || '---'}
                   </td>
                   <td className="px-6 py-4 text-right text-sm font-bold">
-                    ₱{purchase.amount.toLocaleString()}
+                    ₱{(purchase.amount || 0).toLocaleString()}
                   </td>
                   <td className="px-6 py-4 text-center">
                     <button 

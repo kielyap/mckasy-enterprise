@@ -78,7 +78,7 @@ export default function Suppliers() {
     <div className="space-y-6">
       <div className="p-8 border-b border-[#141414] bg-white flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tighter uppercase leading-none italic">02 / Sourcing Registry</h2>
+          <h2 className="text-3xl font-bold tracking-tighter uppercase leading-none italic">Sourcing Registry</h2>
           <p className="text-[10px] font-mono mt-2 opacity-50 uppercase tracking-widest leading-none">Medical Supply Chain Partners</p>
         </div>
         <div className="flex gap-4">
