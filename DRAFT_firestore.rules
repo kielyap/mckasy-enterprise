@@ -1,0 +1,94 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper Primitives
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Entity Validations ---
+
+    function isValidCustomer(data) {
+      return data.companyName is string && data.companyName.size() > 0 && data.companyName.size() < 200
+        && data.contactName is string && data.contactName.size() > 0
+        && (data.get('email', '') == '' || data.email is string);
+    }
+
+    function isValidProduct(data) {
+      return data.itemName is string && data.itemName.size() > 0
+        && data.purchasePrice is number && data.purchasePrice >= 0
+        && data.sellingPrice is number && data.sellingPrice >= 0
+        && data.currentStock is number;
+    }
+
+    function isValidInvoice(data) {
+      return data.invoiceNumber is string && data.invoiceNumber.size() > 0
+        && data.customerId is string && isValidId(data.customerId)
+        && data.totalAmount is number && data.totalAmount >= 0
+        && data.status in ['Paid', 'Unpaid'];
+    }
+
+    // --- Rules ---
+
+    match /customers/{custId} {
+      allow get: if isSignedIn() && isValidId(custId);
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && isValidCustomer(incoming()) && incoming().createdAt == request.time;
+      allow update: if isSignedIn() && isValidCustomer(incoming());
+      allow delete: if isSignedIn();
+    }
+
+    match /suppliers/{suppId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+
+    match /products/{prodId} {
+      allow get: if isSignedIn() && isValidId(prodId);
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && isValidProduct(incoming());
+      allow update: if isSignedIn() && (
+        // Branch 1: General Edit
+        (isValidProduct(incoming()) && incoming().itemName == existing().itemName) ||
+        // Branch 2: Stock Deduction Action (Only stock and updatedAt can change)
+        (incoming().diff(existing()).affectedKeys().hasOnly(['currentStock', 'updatedAt']) && incoming().currentStock is number)
+      );
+      allow delete: if isSignedIn();
+    }
+
+    match /invoices/{invId} {
+      allow get: if isSignedIn() && isValidId(invId);
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && isValidInvoice(incoming()) && incoming().createdAt == request.time;
+      allow update: if isSignedIn() && (
+        // Allow status update to 'Paid' ONLY (Immutable fields check)
+        incoming().diff(existing()).affectedKeys().hasOnly(['status']) 
+        && incoming().invoiceNumber == existing().invoiceNumber
+        && incoming().customerId == existing().customerId
+      );
+    }
+
+    match /invoices/{invId}/items/{itemId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && get(/databases/$(database)/documents/invoices/$(invId)).data != null;
+    }
+  }
+}

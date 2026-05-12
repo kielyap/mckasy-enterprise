@@ -1,0 +1,125 @@
+{
+  "entities": {
+    "Customer": {
+      "title": "Customer",
+      "description": "B2B Hospital or Clinic contact information",
+      "type": "object",
+      "properties": {
+        "companyName": { "type": "string" },
+        "contactName": { "type": "string" },
+        "address": { "type": "string" },
+        "phone": { "type": "string" },
+        "fax": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["companyName", "contactName"]
+    },
+    "Supplier": {
+      "title": "Supplier",
+      "description": "Wholesale medical supply provider",
+      "type": "object",
+      "properties": {
+        "supplierName": { "type": "string" },
+        "contactInfo": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["supplierName"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Medical supply item in inventory",
+      "type": "object",
+      "properties": {
+        "productNo": { "type": "string" },
+        "itemName": { "type": "string" },
+        "packaging": { "type": "string" },
+        "purchasePrice": { "type": "number" },
+        "sellingPrice": { "type": "number" },
+        "currentStock": { "type": "integer" },
+        "minStock": { "type": "integer" },
+        "category": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["itemName", "purchasePrice", "sellingPrice", "currentStock"]
+    },
+    "Invoice": {
+      "title": "Sales Invoice",
+      "description": "Main ledger entry for a sale",
+      "type": "object",
+      "properties": {
+        "invoiceNumber": { "type": "string" },
+        "type": { "type": "string", "enum": ["Invoice", "Delivery Receipt"] },
+        "date": { "type": "string", "format": "date-time" },
+        "customerId": { "type": "string" },
+        "purchaseOrderNo": { "type": "string" },
+        "totalAmount": { "type": "number" },
+        "status": { "type": "string", "enum": ["Paid", "Unpaid"] },
+        "profit": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["invoiceNumber", "date", "customerId", "totalAmount", "status", "type"]
+    },
+    "InvoiceItem": {
+      "title": "Invoice Line Item",
+      "description": "Individual product entry in an invoice",
+      "type": "object",
+      "properties": {
+        "productId": { "type": "string" },
+        "productNo": { "type": "string" },
+        "itemName": { "type": "string" },
+        "quantity": { "type": "integer" },
+        "unitPrice": { "type": "number" },
+        "purchasePrice": { "type": "number" },
+        "lineTotal": { "type": "number" }
+      },
+      "required": ["productId", "quantity", "unitPrice", "lineTotal"]
+    },
+    "Delivery": {
+      "title": "Delivery",
+      "description": "Tracking for hospital shipments",
+      "type": "object",
+      "properties": {
+        "invoiceId": { "type": "string" },
+        "invoiceNumber": { "type": "string" },
+        "customerId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "status": { "type": "string", "enum": ["Processing", "Dispensing", "In Transit", "Delivered"] },
+        "location": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["invoiceId", "invoiceNumber", "customerId", "status"]
+    }
+  },
+  "firestore": {
+    "/customers": {
+      "schema": "Customer",
+      "description": "List of hospitals and clinics"
+    },
+    "/suppliers": {
+      "schema": "Supplier",
+      "description": "List of medical supply wholesalers"
+    },
+    "/products": {
+      "schema": "Product",
+      "description": "Inventory and catalog"
+    },
+    "/purchases": {
+      "schema": "Purchase",
+      "description": "Restocking history"
+    },
+    "/invoices": {
+      "schema": "Invoice",
+      "description": "Sales ledger"
+    },
+    "/invoices/{invoiceId}/items": {
+      "schema": "InvoiceItem",
+      "description": "Line items for a specific invoice"
+    },
+    "/deliveries": {
+      "schema": "Delivery",
+      "description": "Shipping and logistics tracking"
+    }
+  }
+}
