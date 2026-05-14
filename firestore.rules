@@ -52,7 +52,7 @@ service cloud.firestore {
 
     function isValidInvoice(data) {
       return data.invoiceNumber is string && data.invoiceNumber.size() > 0
-        && data.type in ['Invoice', 'Delivery Receipt']
+        && data.type in ['Invoice']
         && data.customerId is string
         && data.totalAmount is number && data.totalAmount >= 0
         && data.status in ['Paid', 'Unpaid'];

@@ -54,7 +54,7 @@ export interface AppUser {
 export interface Invoice {
   id: string;
   invoiceNumber: string;
-  type: 'Invoice' | 'Delivery Receipt';
+  type: 'Invoice';
   date: any;
   customerId: string;
   customerName?: string;

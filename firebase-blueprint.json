@@ -50,7 +50,7 @@
       "type": "object",
       "properties": {
         "invoiceNumber": { "type": "string" },
-        "type": { "type": "string", "enum": ["Invoice", "Delivery Receipt"] },
+        "type": { "type": "string", "enum": ["Invoice"] },
         "date": { "type": "string", "format": "date-time" },
         "customerId": { "type": "string" },
         "purchaseOrderNo": { "type": "string" },

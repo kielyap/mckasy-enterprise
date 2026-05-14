@@ -7,6 +7,7 @@ import {
   writeBatch, 
   doc, 
   addDoc,
+  updateDoc,
   getDocs,
   query,
   where,
@@ -39,7 +40,7 @@ export default function Invoices() {
   const invoiceSchema = `
     - date (string, optional): Transaction date (YYYY-MM-DD or standard format)
     - customerName (string, required): Existing partner entity name (e.g. "ST. LUKE'S")
-    - type (string, optional): "Invoice" or "Delivery Receipt" (default: "Delivery Receipt")
+    - type (string, optional): Should be "Invoice"
     - totalAmount (number, required): Gross sales amount (e.g. 50000.00)
     - totalCost (number, optional): Total procurement cost for profit calc
     - status (string, optional): "Paid" or "Unpaid" (default: "Unpaid")
@@ -49,9 +50,9 @@ export default function Invoices() {
 
   // Form State
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
-  const [invoiceType, setInvoiceType] = useState<'Invoice' | 'Delivery Receipt'>('Delivery Receipt');
+  const [invoiceType] = useState<'Invoice'>('Invoice');
   const [invoiceNumber, setInvoiceNumber] = useState('');
-  const [poNumber, setPoNumber] = useState('');
+  const [poNumber, setPoNumber] = useState('PO-');
   const [projectDescription, setProjectDescription] = useState('');
   const [lineItems, setLineItems] = useState<Partial<InvoiceItem>[]>([
     { productId: '', productNo: '', quantity: 1, unitPrice: 0, lineTotal: 0 }
@@ -72,8 +73,7 @@ export default function Invoices() {
 
         const lastNum = lastInvoice ? parseInt(lastInvoice.invoiceNumber.replace(/\D/g, '') || '0') : 0;
         const nextNum = (lastNum + 1).toString().padStart(4, '0');
-        const prefix = invoiceType === 'Invoice' ? 'INV' : 'DR';
-        return `${prefix}-${nextNum}`;
+        return `INV-${nextNum}`;
       };
       setInvoiceNumber(generateNextId());
     }
@@ -261,9 +261,8 @@ export default function Invoices() {
 
   const resetForm = () => {
     setSelectedCustomerId('');
-    setInvoiceType('Delivery Receipt');
     setInvoiceNumber('');
-    setPoNumber('');
+    setPoNumber('PO-');
     setProjectDescription('');
     setLineItems([{ productId: '', productNo: '', quantity: 1, unitPrice: 0, lineTotal: 0 }]);
   };
@@ -394,7 +393,6 @@ export default function Invoices() {
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <p className="text-sm font-bold uppercase tracking-tighter leading-none">{invoice.invoiceNumber}</p>
-                      <span className="text-[8px] border border-[#141414] px-1 opacity-60 font-bold whitespace-nowrap">{invoice.type === 'Delivery Receipt' ? 'DR' : 'INV'}</span>
                     </div>
                     <p className="text-[10px] font-mono font-bold uppercase opacity-50">{customer?.companyName || 'TERMINATED ENTITY'}</p>
                   </div>
@@ -489,7 +487,7 @@ export default function Invoices() {
               <div className="flex items-center justify-between border-b border-[#141414] bg-white p-8">
                 <div>
                     <h3 className="text-2xl font-bold uppercase tracking-tighter">New Registry Entry</h3>
-                    <p className="text-[10px] font-mono font-bold opacity-40">System Sequence: {invoiceNumber}</p>
+                    <p className="text-[10px] font-mono font-bold opacity-40">Invoice Sequence: {invoiceNumber}</p>
                 </div>
                 <button onClick={() => setIsFormOpen(false)} className="border border-[#141414] p-1.5 hover:bg-[#141414] hover:text-[#E4E3E0] transition-all">
                   <X className="h-5 w-5" />
@@ -510,17 +508,6 @@ export default function Invoices() {
                     />
                   </div>
                   <div className="space-y-3">
-                    <label className="text-[10px] font-mono font-bold uppercase opacity-50 block">Document Type</label>
-                    <select 
-                      value={invoiceType}
-                      onChange={(e) => setInvoiceType(e.target.value as any)}
-                      className="w-full border-2 border-[#141414] bg-white p-3 text-xs font-bold uppercase tracking-tight focus:outline-none focus:bg-[#E4E3E0]/20"
-                    >
-                      <option value="Delivery Receipt">Delivery Receipt</option>
-                      <option value="Invoice">Official Invoice</option>
-                    </select>
-                  </div>
-                  <div className="space-y-3">
                     <label className="text-[10px] font-mono font-bold uppercase opacity-50 block">Customer / Facility</label>
                     <select 
                       value={selectedCustomerId}
@@ -537,9 +524,9 @@ export default function Invoices() {
                     <input 
                       type="text"
                       value={poNumber}
-                      onChange={(e) => setPoNumber(e.target.value)}
+                      onChange={(e) => setPoNumber(e.target.value.toUpperCase())}
                       className="w-full border-2 border-[#141414] bg-white p-3 text-xs font-bold uppercase tracking-tight focus:outline-none focus:bg-[#E4E3E0]/20"
-                      placeholder="PO-XXXXX-2024"
+                      placeholder="PO-XXXXX"
                     />
                   </div>
                   <div className="space-y-3">
@@ -674,10 +661,10 @@ export default function Invoices() {
                 </div>
                 <div className="text-right">
                   <h4 className="text-xl font-bold uppercase tracking-tighter leading-none mb-1">
-                    {showInvoiceDetails.type || 'DELIVERY RECEIPT'}
+                    INVOICE
                   </h4>
                   <div className="text-[10px] font-mono uppercase opacity-60">
-                    <p>Receipt No: {showInvoiceDetails.invoiceNumber.slice(-6)}</p>
+                    <p>Receipt No: {showInvoiceDetails.invoiceNumber}</p>
                     <p>Date: {showInvoiceDetails.date ? format(showInvoiceDetails.date.toDate(), 'MM/dd/yyyy') : '---'}</p>
                   </div>
                 </div>

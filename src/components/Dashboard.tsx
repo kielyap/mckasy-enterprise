@@ -6,9 +6,9 @@ import { startOfMonth, format } from 'date-fns';
 import { motion } from 'motion/react';
 
 export default function Dashboard() {
-  const [lowStockProducts, setLowStockProducts] = useState<Product[]>([]);
-  const [recentInvoices, setRecentInvoices] = useState<Invoice[]>([]);
   const [activeDeliveries, setActiveDeliveries] = useState<Delivery[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [hospitalStats, setHospitalStats] = useState<{ [key: string]: { name: string, revenue: number, profit: number, count: number } }>({});
   const [monthlyStats, setMonthlyStats] = useState({
     revenue: 0,
     profit: 0,
@@ -39,21 +39,14 @@ export default function Dashboard() {
       setMonthlyStats(prev => ({ ...prev, purchases: total }));
     });
 
-    const qLowStock = query(collection(db, 'products'), where('currentStock', '<', 10));
-    const unsubscribeLowStock = onSnapshot(qLowStock, 
-      (snapshot) => {
-        const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
-        setLowStockProducts(items);
-      },
-      (error) => handleFirestoreError(error, OperationType.LIST, 'products_low_stock')
-    );
-
     const qAllProducts = collection(db, 'products');
     const unsubscribeAllProducts = onSnapshot(qAllProducts, 
       (snapshot) => {
+        const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+        setAllProducts(items);
+        
         let totalVal = 0;
-        snapshot.docs.forEach(doc => {
-          const p = doc.data() as Product;
+        items.forEach(p => {
           totalVal += (p.currentStock || 0) * (p.purchasePrice || 0);
         });
         setInventoryValue(totalVal);
@@ -71,6 +64,8 @@ export default function Dashboard() {
         let revenue = 0;
         let profit = 0;
         let cost = 0;
+        const stats: { [key: string]: { name: string, revenue: number, profit: number, count: number } } = {};
+
         snapshot.docs.forEach(doc => {
           const data = doc.data() as Invoice;
           const docRevenue = Number(data.totalAmount) || 0;
@@ -80,6 +75,15 @@ export default function Dashboard() {
           revenue += docRevenue;
           profit += docProfit;
           cost += docCost;
+
+          if (data.customerName) {
+            if (!stats[data.customerName]) {
+              stats[data.customerName] = { name: data.customerName, revenue: 0, profit: 0, count: 0 };
+            }
+            stats[data.customerName].revenue += docRevenue;
+            stats[data.customerName].profit += docProfit;
+            stats[data.customerName].count += 1;
+          }
         });
         setMonthlyStats(prev => ({
           ...prev,
@@ -88,16 +92,9 @@ export default function Dashboard() {
           cost,
           invoiceCount: snapshot.docs.length
         }));
+        setHospitalStats(stats);
       },
       (error) => handleFirestoreError(error, OperationType.LIST, 'invoices_monthly')
-    );
-
-    const qRecent = query(collection(db, 'invoices'), orderBy('date', 'desc'), limit(5));
-    const unsubscribeRecent = onSnapshot(qRecent, 
-      (snapshot) => {
-        setRecentInvoices(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Invoice)));
-      },
-      (error) => handleFirestoreError(error, OperationType.LIST, 'invoices_recent')
     );
 
     const qDeliveries = query(collection(db, 'deliveries'), where('status', '!=', 'Delivered'), limit(4));
@@ -111,15 +108,70 @@ export default function Dashboard() {
     return () => {
       unsubAllPurchases();
       unsubMonthlyPurchases();
-      unsubscribeLowStock();
       unsubscribeAllProducts();
       unsubscribeInvoices();
-      unsubscribeRecent();
       unsubscribeDeliveries();
     };
   }, []);
 
   const [isSeeding, setIsSeeding] = useState(false);
+
+  const generatePrescriptiveInsights = () => {
+    const insights: { type: string, title: string, action: string, priority: 'HIGH' | 'MEDIUM' | 'LOW' }[] = [];
+
+    // 1. Inventory & Restock Insights
+    const criticalStock = allProducts.filter(p => p.currentStock <= (p.lowStockThreshold || 10));
+    if (criticalStock.length > 0) {
+      insights.push({
+        type: 'Procurement',
+        title: `${criticalStock.length} Critical Stock Depletions`,
+        action: `Issue Immediate PO for ${criticalStock[0].itemName.slice(0, 15)}...`,
+        priority: 'HIGH'
+      });
+    }
+
+    // 2. Financial & Profitability Insights
+    const margin = monthlyStats.revenue > 0 ? (monthlyStats.profit / monthlyStats.revenue) : 0;
+    if (margin < 0.2 && monthlyStats.revenue > 0) {
+      insights.push({
+        type: 'Efficiency',
+        title: 'Tight Profit Margin Warning',
+        action: 'Review Pricing Strategy or Negotiate Supplier Rates',
+        priority: 'MEDIUM'
+      });
+    }
+
+    const netCashFlow = monthlyStats.revenue - monthlyStats.purchases;
+    if (netCashFlow < 0) {
+      insights.push({
+        type: 'Finance',
+        title: 'Negative Monthly Cash Flow',
+        action: 'Halt Non-Essential Procurement for Current Cycle',
+        priority: 'HIGH'
+      });
+    }
+
+    // 3. Sales Opportunity
+    if (monthlyStats.invoiceCount > 10) {
+      insights.push({
+        type: 'Growth',
+        title: 'High Transaction Velocity',
+        action: 'Request Bulk Discounts from Primary Suppliers',
+        priority: 'MEDIUM'
+      });
+    } else if (monthlyStats.invoiceCount > 0) {
+       insights.push({
+        type: 'Operation',
+        title: 'Stable Operational Rhythm',
+        action: 'Maintain Current Supply Chain Flow',
+        priority: 'LOW'
+      });
+    }
+
+    return insights;
+  };
+
+  const insights = generatePrescriptiveInsights();
 
   const seedFromCSV = async () => {
     setIsSeeding(true);
@@ -219,7 +271,7 @@ export default function Dashboard() {
       // 4. Seed a few Invoices (DR 621 and INV 0806)
       const invoiceRef = collection(db, 'invoices');
       const sampleInvoices = [
-        { invoiceNumber: 'DR-000621', customer: 'MCU HOSPITAL', type: 'Delivery Receipt', totalAmount: 595, profit: 145, projectDescription: 'URGENT LUBRICANT RESTOCK', items: [{ productNo: '66', qty: 1, up: 595, cp: 450, name: 'LUBRICANT JELLY SACHET 5g' }] },
+        { invoiceNumber: 'INV-000621', customer: 'MCU HOSPITAL', type: 'Invoice', totalAmount: 595, profit: 145, projectDescription: 'URGENT LUBRICANT RESTOCK', items: [{ productNo: '66', qty: 1, up: 595, cp: 450, name: 'LUBRICANT JELLY SACHET 5g' }] },
         { invoiceNumber: 'INV-000806', customer: 'SAN JUAN DE DIOS HOSPITAL', type: 'Invoice', totalAmount: 117050, profit: 45000, projectDescription: 'PO 7067 - SURGICAL SUPPLIES', items: [
           { productNo: '27', qty: 50, up: 800, cp: 490, name: 'STERILE SURGICAL GLOVES 7.0' },
           { productNo: '06', qty: 40000, up: 2.2, cp: 1.5, name: 'EXAMINATION GLOVES MEDIUM' }
@@ -332,64 +384,96 @@ export default function Dashboard() {
         </div>
       </section>
 
-      {/* 02 / Critical Alerts */}
-      <section className="col-span-1 md:col-span-4 border-b border-[#141414] p-8 bg-[#141414] text-[#E4E3E0]">
-        <div className="flex justify-between items-start mb-8">
-          <h2 className="text-[11px] font-mono uppercase opacity-50 text-[#E4E3E0]">Low Stock Alerts</h2>
-          <span className="text-[10px] border border-[#E4E3E0] px-2 py-1 font-bold">CRITICAL</span>
-        </div>
-        
-        <div className="space-y-6">
-          {lowStockProducts.length === 0 ? (
-            <p className="text-[11px] font-mono opacity-40 italic">Inventory levels remaining within safety margins.</p>
-          ) : (
-            lowStockProducts.slice(0, 4).map(product => (
-              <div key={product.id} className="border-l-2 border-red-500 pl-4 py-1">
-                <div className="flex justify-between text-sm font-bold uppercase tracking-tighter">
-                  <span className="truncate max-w-[150px]">{product.itemName}</span>
-                  <span className="text-red-500 font-mono">{product.currentStock} {product.packaging}</span>
+      {/* 02 / Prescriptive Analytics Engine */}
+      <section className="col-span-1 md:col-span-4 border-b border-[#141414] p-8 bg-[#141414] text-[#E4E3E0] flex flex-col justify-between">
+        <div>
+          <div className="flex justify-between items-start mb-8">
+            <h2 className="text-[11px] font-mono uppercase opacity-50 text-[#E4E3E0]">Prescriptive Strategy Engine</h2>
+            <div className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[10px] font-bold">ANALYZING</span>
+            </div>
+          </div>
+          
+          <div className="space-y-6">
+            {insights.length === 0 ? (
+               <p className="text-[11px] font-mono opacity-40 italic">Aggregating historical data for business modeling...</p>
+            ) : (
+              insights.map((insight, idx) => (
+                <div key={idx} className="group cursor-default">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-[9px] font-bold font-mono text-emerald-400 uppercase tracking-widest">{insight.type}</span>
+                    <span className={`text-[8px] font-bold px-1.5 py-0.5 border ${
+                      insight.priority === 'HIGH' ? 'border-red-500 text-red-500' : 
+                      insight.priority === 'MEDIUM' ? 'border-amber-500 text-amber-500' : 'border-gray-500 text-gray-500'
+                    }`}>
+                      {insight.priority}
+                    </span>
+                  </div>
+                  <h3 className="text-sm font-bold uppercase tracking-tight mb-1">{insight.title}</h3>
+                  <p className="text-[10px] opacity-40 font-mono leading-tight group-hover:opacity-100 transition-opacity italic">Action: {insight.action}</p>
                 </div>
-                <div className="text-[10px] opacity-40 font-mono mt-1">Ref: {product.id.slice(0, 8)}</div>
-              </div>
-            ))
-          )}
+              ))
+            )}
+          </div>
+        </div>
+
+        <div className="mt-8 pt-6 border-t border-[#E4E3E0]/10 flex flex-col gap-1">
+           <span className="text-[9px] font-mono opacity-40 uppercase">Decision Confidence</span>
+           <div className="w-full h-1 bg-[#282828]">
+             <div className="h-full bg-emerald-500 w-[92%]" />
+           </div>
         </div>
       </section>
 
-      {/* 03 / Recent Invoices */}
-      <section className="col-span-1 md:col-span-6 border-r border-[#141414] p-8 bg-white">
-        <div className="flex justify-between items-start mb-8">
-          <h2 className="text-[11px] font-mono uppercase opacity-50">Recent Transaction History</h2>
-          <FileText className="h-4 w-4 opacity-30" />
+      {/* 03 / Hospital Profitability Breakdown */}
+      <section className="col-span-1 md:col-span-12 lg:col-span-6 border-r border-[#141414] p-8 bg-white max-h-[500px] overflow-hidden flex flex-col">
+        <div className="flex justify-between items-start mb-8 shrink-0">
+          <h2 className="text-[11px] font-mono uppercase opacity-50">Partner Hospital Performance</h2>
+          <TrendingUp className="h-4 w-4 opacity-30" />
         </div>
         
-        <div className="space-y-4">
-          {recentInvoices.length === 0 ? (
-            <p className="text-[11px] font-mono opacity-30 italic">No recent documents recorded.</p>
-          ) : (
-            recentInvoices.map((inv) => (
-              <div key={inv.id} className="flex items-center justify-between p-4 border-2 border-[#141414] group hover:bg-[#141414] hover:text-[#E4E3E0] transition-all cursor-pointer">
-                <div className="flex-1 min-w-0 pr-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-bold uppercase tracking-tighter leading-none truncate">{inv.invoiceNumber}</span>
-                    <span className="text-[8px] border border-current px-1 opacity-60 font-bold shrink-0">{inv.type === 'Invoice' ? 'INV' : 'DR'}</span>
-                  </div>
-                  <p className="text-[10px] font-mono opacity-50 uppercase">{inv.date ? format(inv.date.toDate(), 'MMM dd, yyyy') : '---'}</p>
-                </div>
-                <div className="text-right shrink-0">
-                  <p className="font-bold font-mono text-sm leading-none">₱{(inv.totalAmount || 0).toLocaleString()}</p>
-                  <p className={`text-[9px] font-bold uppercase mt-1 ${inv.status === 'Paid' ? 'text-emerald-500' : 'text-amber-500'}`}>
-                    {inv.status}
-                  </p>
-                </div>
-              </div>
-            ))
-          )}
+        <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+          <div className="space-y-4">
+            {Object.values(hospitalStats).length === 0 ? (
+              <p className="text-[11px] font-mono opacity-30 italic">No partnership data recorded for current cycle.</p>
+            ) : (
+              Object.values(hospitalStats)
+                .sort((a, b) => b.profit - a.profit)
+                .map((stat, idx) => {
+                  const partnerMargin = stat.revenue > 0 ? (stat.profit / stat.revenue) * 100 : 0;
+                  return (
+                    <div key={idx} className="group border-b border-[#141414]/10 pb-4 last:border-0 hover:bg-[#E4E3E0]/20 transition-colors p-2 -mx-2">
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="min-w-0 flex-1 pr-4">
+                          <h4 className="text-xs font-bold uppercase tracking-tight truncate">{stat.name}</h4>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[9px] font-mono opacity-40 uppercase">{stat.count} Transactions</span>
+                            <span className="text-[8px] bg-[#141414] text-[#E4E3E0] px-1 font-bold">TOP PARTNER</span>
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-sm font-bold font-mono">₱{stat.profit.toLocaleString()}</p>
+                          <p className="text-[9px] font-mono text-emerald-600 font-bold uppercase">+{partnerMargin.toFixed(1)}%</p>
+                        </div>
+                      </div>
+                      <div className="w-full h-1 bg-[#E4E3E0] mt-1 relative overflow-hidden">
+                        <motion.div 
+                          initial={{ width: 0 }}
+                          animate={{ width: `${Math.min((stat.profit / (monthlyStats.profit || 1)) * 100, 100)}%` }}
+                          className="absolute h-full bg-[#141414]"
+                        />
+                      </div>
+                    </div>
+                  );
+                })
+            )}
+          </div>
         </div>
       </section>
 
       {/* 04 / Delivery Tracker Preview */}
-      <section className="col-span-1 md:col-span-6 p-8 bg-[#E4E3E0]">
+      <section className="col-span-1 md:col-span-12 lg:col-span-6 p-8 bg-[#E4E3E0] border-b border-[#141414]">
         <div className="flex justify-between items-start mb-8">
           <h2 className="text-[11px] font-mono uppercase opacity-50 text-[#141414]">Logistics Tracking Preview</h2>
           <Truck className="h-4 w-4 opacity-30" />
