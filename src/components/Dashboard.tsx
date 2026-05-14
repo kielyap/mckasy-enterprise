@@ -435,10 +435,7 @@ export default function Dashboard() {
         
         <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
           <div className="space-y-4">
-            {Object.values(hospitalStats).length === 0 ? (
-              <p className="text-[11px] font-mono opacity-30 italic">No partnership data recorded for current cycle.</p>
-            ) : (
-              Object.values(hospitalStats)
+              {(Object.values(hospitalStats) as Array<{ name: string, revenue: number, profit: number, count: number }>)
                 .sort((a, b) => b.profit - a.profit)
                 .map((stat, idx) => {
                   const partnerMargin = stat.revenue > 0 ? (stat.profit / stat.revenue) * 100 : 0;
@@ -466,8 +463,7 @@ export default function Dashboard() {
                       </div>
                     </div>
                   );
-                })
-            )}
+                })}
           </div>
         </div>
       </section>

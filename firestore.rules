@@ -13,7 +13,7 @@ service cloud.firestore {
     }
 
     function isMasterAdmin() {
-      return isSignedIn() && request.auth.token.email == 'kielyap15@gmail.com';
+      return isSignedIn() && request.auth.token.email == 'kielyap15@gmail.com' && request.auth.token.email_verified == true;
     }
 
     function isAdmin() {
@@ -21,7 +21,7 @@ service cloud.firestore {
     }
 
     function isAuthorized() {
-      return isAdmin() || (isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAuthorized == true);
+      return isMasterAdmin() || isAdmin() || (isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAuthorized == true);
     }
 
     function isValidId(id) {
@@ -160,6 +160,23 @@ service cloud.firestore {
         incoming().diff(existing()).affectedKeys().hasOnly(['status', 'location', 'updatedAt'])
         && isValidDelivery(incoming())
       );
+      allow delete: if isAdmin();
+    }
+
+    match /productList/{itemId} {
+      function isValidProductListItem(data) {
+        return data.category is string && data.category.size() > 0
+          && data.item is string && data.item.size() > 0
+          && data.order is number;
+      }
+      allow get, list: if isAuthorized();
+      allow create, update: if isAuthorized() && isValidProductListItem(incoming());
+      allow delete: if isAdmin();
+    }
+
+    match /productCategories/{catId} {
+      allow get, list: if isAuthorized();
+      allow create, update: if isAuthorized() && (incoming().name is string && incoming().order is number);
       allow delete: if isAdmin();
     }
   }

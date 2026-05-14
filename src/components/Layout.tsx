@@ -8,6 +8,7 @@ import {
   FileText, 
   ShoppingBag,
   ShieldCheck,
+  ClipboardList,
   LogOut,
   Menu,
   X
@@ -26,6 +27,7 @@ export default function Layout({ children, activeTab, setActiveTab }: LayoutProp
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'productList', label: 'Product List', icon: ClipboardList },
     { id: 'customers', label: 'CRM', icon: Users },
     { id: 'suppliers', label: 'Suppliers', icon: Truck },
     { id: 'purchases', label: 'Purchases', icon: ShoppingBag },

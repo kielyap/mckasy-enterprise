@@ -81,6 +81,27 @@ export interface InvoiceItem {
   lineTotal: number;
 }
 
+export interface ProductCategory {
+  id: string;
+  name: string;
+  order: number;
+}
+
+export interface ProductListItem {
+  id: string;
+  category: string;
+  item: string;
+  volume?: string;
+  purchasePrice?: number;
+  totalPurchase?: number;
+  supplier?: string;
+  sellingPrice?: number;
+  totalSellingPrice?: number;
+  notes?: string;
+  order: number;
+  updatedAt?: any;
+}
+
 export interface Delivery {
   id: string;
   invoiceId: string;

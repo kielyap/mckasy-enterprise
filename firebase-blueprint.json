@@ -119,9 +119,46 @@
         "updatedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["email", "role", "isAuthorized"]
+    },
+    "ProductListItem": {
+      "title": "Product List Item",
+      "description": "A categorized, editable reference for products",
+      "type": "object",
+      "properties": {
+        "category": { "type": "string" },
+        "item": { "type": "string" },
+        "volume": { "type": "string" },
+        "purchasePrice": { "type": "number" },
+        "totalPurchase": { "type": "number" },
+        "supplier": { "type": "string" },
+        "sellingPrice": { "type": "number" },
+        "totalSellingPrice": { "type": "number" },
+        "notes": { "type": "string" },
+        "order": { "type": "integer" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["category", "item", "order"]
+    },
+    "ProductCategory": {
+      "title": "Product Category",
+      "description": "Dynamic headers for the product list tables",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "order": { "type": "integer" }
+      },
+      "required": ["name", "order"]
     }
   },
   "firestore": {
+    "productCategories": {
+      "schema": "ProductCategory",
+      "description": "Dynamic table headers for Product List"
+    },
+    "productList": {
+      "schema": "ProductListItem",
+      "description": "The categorized Product List from reference PDF/CSV"
+    },
     "users": {
         "schema": "AppUser",
         "description": "Central registry of authorized users"

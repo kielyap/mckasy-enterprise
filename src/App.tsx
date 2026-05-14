@@ -10,6 +10,7 @@ import Dashboard from './components/Dashboard';
 import CRM from './components/CRM';
 import Suppliers from './components/Suppliers';
 import Inventory from './components/Inventory';
+import ProductList from './components/ProductList';
 import Invoices from './components/Invoices';
 import Deliveries from './components/Deliveries';
 import Purchases from './components/Purchases';
@@ -84,6 +85,7 @@ function AppContent() {
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard': return <Dashboard />;
+      case 'productList': return <ProductList />;
       case 'customers': return <CRM />;
       case 'suppliers': return <Suppliers />;
       case 'inventory': return <Inventory />;
