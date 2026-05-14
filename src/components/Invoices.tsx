@@ -319,28 +319,30 @@ export default function Invoices() {
 
   return (
     <div className="space-y-6">
-      <div className="p-8 border-b border-[#141414] bg-white flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="p-4 sm:p-8 border-b border-[#141414] bg-white flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tighter uppercase leading-none italic">Sales & Billing</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tighter uppercase leading-none italic">Sales & Billing</h2>
           <p className="text-[10px] font-mono mt-2 opacity-50 uppercase tracking-widest leading-none">Revenue Stream & Stock Reconcile</p>
         </div>
-        <div className="flex gap-4">
-          <ImportIntelligence 
-            collectionName="invoices" 
-            title="Bulk Invoices" 
-            schemaDetails={invoiceSchema} 
-          />
+        <div className="flex flex-wrap gap-3 sm:gap-4 w-full lg:w-auto">
+          <div className="flex-1 lg:flex-none">
+            <ImportIntelligence 
+              collectionName="invoices" 
+              title="Bulk Invoices" 
+              schemaDetails={invoiceSchema} 
+            />
+          </div>
           <button 
             onClick={() => setIsFormOpen(true)}
-            className="flex items-center justify-center gap-2 border-2 border-[#141414] bg-[#141414] px-4 py-2 text-[10px] font-bold uppercase text-[#E4E3E0] hover:bg-transparent hover:text-[#141414] transition-all"
+            className="flex-1 lg:flex-none flex items-center justify-center gap-2 border-2 border-[#141414] bg-[#141414] px-4 py-2 text-[10px] font-bold uppercase text-[#E4E3E0] hover:bg-transparent hover:text-[#141414] transition-all"
           >
             <Plus className="h-4 w-4" />
-            Create New Invoice
+            <span className="whitespace-nowrap">Create Invoice</span>
           </button>
         </div>
       </div>
 
-      <div className="p-8 space-y-6">
+      <div className="p-4 sm:p-8 space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
           <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#141414] opacity-40" />
@@ -484,9 +486,9 @@ export default function Invoices() {
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
               className="relative flex h-full w-full max-w-2xl flex-col bg-white border-l border-[#141414] shadow-2xl"
             >
-              <div className="flex items-center justify-between border-b border-[#141414] bg-white p-8">
+              <div className="flex items-center justify-between border-b border-[#141414] bg-white p-6 sm:p-8 shrink-0">
                 <div>
-                    <h3 className="text-2xl font-bold uppercase tracking-tighter">New Registry Entry</h3>
+                    <h3 className="text-xl sm:text-2xl font-bold uppercase tracking-tighter">New Registry Entry</h3>
                     <p className="text-[10px] font-mono font-bold opacity-40">Invoice Sequence: {invoiceNumber}</p>
                 </div>
                 <button onClick={() => setIsFormOpen(false)} className="border border-[#141414] p-1.5 hover:bg-[#141414] hover:text-[#E4E3E0] transition-all">
@@ -494,7 +496,7 @@ export default function Invoices() {
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-8 space-y-10 custom-scrollbar">
+              <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-8 sm:space-y-10 custom-scrollbar">
                 {/* Header Info */}
                 <div className="grid gap-8 sm:grid-cols-2">
                   <div className="space-y-3">
@@ -560,7 +562,7 @@ export default function Invoices() {
                   
                   <div className="space-y-4">
                     {lineItems.map((item, index) => (
-                      <div key={index} className="grid grid-cols-12 gap-4 items-end bg-[#E4E3E0]/20 p-6 border-2 border-[#141414]">
+                      <div key={index} className="grid grid-cols-12 gap-3 sm:gap-4 items-end bg-[#E4E3E0]/20 p-4 sm:p-6 border-2 border-[#141414]">
                         <div className="col-span-12 lg:col-span-6">
                           <label className="text-[8px] font-mono font-bold uppercase opacity-40 mb-1 block">Inventory Asset</label>
                           <select 
@@ -650,17 +652,17 @@ export default function Invoices() {
               exit={{ opacity: 0, scale: 0.95 }}
               className="relative w-full max-w-2xl border-4 border-[#141414] bg-white shadow-[16px_16px_0px_0px_rgba(20,20,20,1)] overflow-hidden flex flex-col max-h-[90vh]"
             >
-              <div className="p-8 border-b-2 border-[#141414] flex items-start justify-between bg-white text-[#141414]">
+              <div className="p-4 sm:p-8 border-b-2 border-[#141414] flex flex-col sm:flex-row items-start justify-between bg-white text-[#141414] gap-6">
                 <div className="space-y-1">
-                  <h3 className="text-3xl font-bold uppercase tracking-tighter leading-none">MCKASY ENTERPRISE</h3>
+                  <h3 className="text-2xl sm:text-3xl font-bold uppercase tracking-tighter leading-none">MCKASY ENTERPRISE</h3>
                   <div className="text-[10px] font-mono uppercase opacity-60 leading-tight">
                     <p>31D Marinduque St., Quezon City</p>
                     <p>mckasyent@gmail.com</p>
                     <p>(02) 8376-7802 / 0960 867 0024</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <h4 className="text-xl font-bold uppercase tracking-tighter leading-none mb-1">
+                <div className="text-left sm:text-right">
+                  <h4 className="text-lg sm:text-xl font-bold uppercase tracking-tighter leading-none mb-1">
                     INVOICE
                   </h4>
                   <div className="text-[10px] font-mono uppercase opacity-60">
@@ -676,11 +678,11 @@ export default function Invoices() {
                 </button>
               </div>
 
-              <div className="p-8 overflow-y-auto space-y-10 custom-scrollbar">
-                <div className="grid grid-cols-2 gap-10">
+              <div className="p-4 sm:p-8 overflow-y-auto space-y-10 custom-scrollbar">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 sm:gap-10">
                   <div className="space-y-4">
                     <h4 className="text-[10px] font-mono font-bold uppercase opacity-40 border-b border-[#141414]/10 pb-1">TO:</h4>
-                    <p className="text-lg font-bold uppercase tracking-tight leading-tight">
+                    <p className="text-base sm:text-lg font-bold uppercase tracking-tight leading-tight">
                       {customers.find(c => c.id === showInvoiceDetails.customerId)?.companyName || 'UNKNOWN ENTITY'}
                     </p>
                     <div className="text-[10px] font-mono opacity-50 uppercase leading-relaxed">
@@ -713,8 +715,8 @@ export default function Invoices() {
                 </div>
 
                 <div className="space-y-4">
-                  <div className="border-t-2 border-b-2 border-[#141414]">
-                    <table className="w-full text-left text-[11px] font-mono">
+                  <div className="border-t-2 border-b-2 border-[#141414] overflow-x-auto">
+                    <table className="w-full text-left text-[11px] font-mono min-w-[600px]">
                       <thead>
                         <tr className="font-bold uppercase border-b border-[#141414]">
                           <th className="px-4 py-2 border-r border-[#141414] w-24">Product No</th>
@@ -748,38 +750,38 @@ export default function Invoices() {
                   </div>
                 </div>
 
-                <div className="flex justify-between items-start pt-10">
-                  <div className="w-64 space-y-8">
-                     <div className="border-t border-[#141414] pt-2">
+                <div className="flex flex-col sm:flex-row justify-between items-start pt-10 gap-8">
+                  <div className="w-full sm:w-64 space-y-8">
+                      <div className="border-t border-[#141414] pt-2">
                         <p className="text-[10px] font-bold uppercase">Received By:</p>
                         <div className="h-10"></div>
                         <p className="text-[9px] font-mono opacity-50">Signature / Printed Name / Date</p>
-                     </div>
+                      </div>
                   </div>
-                  <div className="text-right space-y-2">
-                    <div className="flex justify-between gap-20 text-[10px] font-mono uppercase opacity-60">
+                  <div className="w-full sm:text-right space-y-2">
+                    <div className="flex justify-between sm:justify-end gap-10 text-[10px] font-mono uppercase opacity-60">
                       <span>Total Sales</span>
                       <span>₱{(showInvoiceDetails.totalAmount || 0).toLocaleString()}</span>
                     </div>
-                    <div className="flex justify-between gap-20 text-[10px] font-mono uppercase opacity-60">
+                    <div className="flex justify-between sm:justify-end gap-10 text-[10px] font-mono uppercase opacity-60">
                       <span>Percentage Tax (1%)</span>
                       <span>₱{(showInvoiceDetails.totalAmount * 0.01 || 0).toLocaleString()}</span>
                     </div>
-                    <div className="flex justify-between gap-20 text-[10px] font-mono uppercase opacity-60 italic">
+                    <div className="flex justify-between sm:justify-end gap-10 text-[10px] font-mono uppercase opacity-60 italic">
                       <span>Amount: Net of Tax</span>
                       <span>₱{(showInvoiceDetails.totalAmount * 0.99 || 0).toLocaleString()}</span>
                     </div>
-                    <div className="flex justify-between gap-20 text-sm border-t border-[#141414] pt-2 mt-2 font-bold">
+                    <div className="flex justify-between sm:justify-end gap-10 text-sm border-t border-[#141414] pt-2 mt-2 font-bold">
                       <span className="uppercase">Total Amount Due</span>
                       <span className="font-mono">₱{(showInvoiceDetails.totalAmount || 0).toLocaleString()}</span>
                     </div>
                     {showInvoiceDetails.depositReceived ? (
-                      <div className="flex justify-between gap-20 text-[10px] font-mono uppercase text-emerald-600">
+                      <div className="flex justify-between sm:justify-end gap-10 text-[10px] font-mono uppercase text-emerald-600">
                         <span>Deposit Received</span>
                         <span>-₱{(showInvoiceDetails.depositReceived || 0).toLocaleString()}</span>
                       </div>
                     ) : (
-                       <div className="flex justify-between gap-20 text-[10px] font-mono uppercase opacity-40">
+                       <div className="flex justify-between sm:justify-end gap-10 text-[10px] font-mono uppercase opacity-40">
                          <span>Deposit Received</span>
                          <span>₱0.00</span>
                       </div>

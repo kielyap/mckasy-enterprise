@@ -132,28 +132,30 @@ export default function Inventory() {
 
   return (
     <div className="space-y-6">
-      <div className="p-8 border-b border-[#141414] bg-white flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="p-4 sm:p-8 border-b border-[#141414] bg-white flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tighter uppercase leading-none italic">Inventory Catalog</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tighter uppercase leading-none italic">Inventory Catalog</h2>
           <p className="text-[10px] font-mono mt-2 opacity-50 uppercase tracking-widest leading-none">Medical Supply Stock & Pricing Control</p>
         </div>
-        <div className="flex gap-4">
-          <ImportIntelligence 
-            collectionName="products" 
-            title="Catalogue" 
-            schemaDetails={productSchema} 
-          />
+        <div className="flex flex-wrap gap-3 sm:gap-4 w-full lg:w-auto">
+          <div className="flex-1 lg:flex-none">
+            <ImportIntelligence 
+              collectionName="products" 
+              title="Catalogue" 
+              schemaDetails={productSchema} 
+            />
+          </div>
           <button 
             onClick={() => openModal()}
-            className="flex items-center justify-center gap-2 border-2 border-[#141414] bg-[#141414] px-4 py-2 text-[10px] font-bold uppercase text-[#E4E3E0] hover:bg-transparent hover:text-[#141414] transition-all"
+            className="flex-1 lg:flex-none flex items-center justify-center gap-2 border-2 border-[#141414] bg-[#141414] px-4 py-2 text-[10px] font-bold uppercase text-[#E4E3E0] hover:bg-transparent hover:text-[#141414] transition-all"
           >
             <Plus className="h-4 w-4" />
-            Add New Product
+            <span className="whitespace-nowrap">Add Product</span>
           </button>
         </div>
       </div>
 
-      <div className="p-8 space-y-8">
+      <div className="p-4 sm:p-8 space-y-8">
         <div className="relative">
           <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#141414] opacity-40" />
           <input
@@ -170,54 +172,54 @@ export default function Inventory() {
             <table className="w-full text-left text-sm border-collapse">
               <thead className="bg-[#141414] text-[#E4E3E0] text-[9px] font-bold tracking-widest uppercase">
                 <tr>
-                  <th className="px-6 py-3 border-r border-[#E4E3E0]/20 cursor-pointer hover:bg-[#141414]/80 transition-colors" onClick={() => handleSort('productNo')}>
+                  <th className="px-3 sm:px-6 py-3 border-r border-[#E4E3E0]/20 cursor-pointer hover:bg-[#141414]/80 transition-colors" onClick={() => handleSort('productNo')}>
                     <div className="flex items-center gap-1">
                       ID# {sortField === 'productNo' && (sortOrder === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
                     </div>
                   </th>
-                  <th className="px-6 py-3 border-r border-[#E4E3E0]/20 cursor-pointer hover:bg-[#141414]/80 transition-colors" onClick={() => handleSort('itemName')}>
+                  <th className="px-3 sm:px-6 py-3 border-r border-[#E4E3E0]/20 cursor-pointer hover:bg-[#141414]/80 transition-colors" onClick={() => handleSort('itemName')}>
                     <div className="flex items-center gap-1">
                       Item Name {sortField === 'itemName' && (sortOrder === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
                     </div>
                   </th>
-                  <th className="px-6 py-3 border-r border-[#E4E3E0]/20 cursor-pointer hover:bg-[#141414]/80 transition-colors" onClick={() => handleSort('packaging')}>
+                  <th className="px-3 sm:px-6 py-3 border-r border-[#E4E3E0]/20 cursor-pointer hover:bg-[#141414]/80 transition-colors" onClick={() => handleSort('packaging')}>
                     <div className="flex items-center gap-1">
                       Packaging {sortField === 'packaging' && (sortOrder === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
                     </div>
                   </th>
-                  <th className="px-6 py-3 border-r border-[#E4E3E0]/20 cursor-pointer hover:bg-[#141414]/80 transition-colors" onClick={() => handleSort('purchasePrice')}>
+                  <th className="px-3 sm:px-6 py-3 border-r border-[#E4E3E0]/20 cursor-pointer hover:bg-[#141414]/80 transition-colors" onClick={() => handleSort('purchasePrice')}>
                     <div className="flex items-center gap-1">
                       Cost {sortField === 'purchasePrice' && (sortOrder === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
                     </div>
                   </th>
-                  <th className="px-6 py-3 border-r border-[#E4E3E0]/20 cursor-pointer hover:bg-[#141414]/80 transition-colors" onClick={() => handleSort('sellingPrice')}>
+                  <th className="px-3 sm:px-6 py-3 border-r border-[#E4E3E0]/20 cursor-pointer hover:bg-[#141414]/80 transition-colors" onClick={() => handleSort('sellingPrice')}>
                     <div className="flex items-center gap-1">
                       Price {sortField === 'sellingPrice' && (sortOrder === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
                     </div>
                   </th>
-                  <th className="px-6 py-3 border-r border-[#E4E3E0]/20 cursor-pointer hover:bg-[#141414]/80 transition-colors" onClick={() => handleSort('currentStock')}>
+                  <th className="px-3 sm:px-6 py-3 border-r border-[#E4E3E0]/20 cursor-pointer hover:bg-[#141414]/80 transition-colors" onClick={() => handleSort('currentStock')}>
                     <div className="flex items-center gap-1">
                       Stock {sortField === 'currentStock' && (sortOrder === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
                     </div>
                   </th>
-                  <th className="px-6 py-3 text-center">Actions</th>
+                  <th className="px-3 sm:px-6 py-3 text-center">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#141414]/10">
                 {currentItems.map((product) => (
                   <tr key={product.id} className="hover:bg-[#E4E3E0]/30 transition-colors">
-                    <td className="px-6 py-4 border-r border-[#141414]/10">
+                    <td className="px-3 sm:px-6 py-4 border-r border-[#141414]/10">
                       <span className="text-[10px] font-mono font-bold">{product.productNo || '---'}</span>
                     </td>
-                    <td className="px-6 py-4 border-r border-[#141414]/10">
+                    <td className="px-3 sm:px-6 py-4 border-r border-[#141414]/10">
                       <p className="font-bold uppercase tracking-tighter text-sm">{product.itemName}</p>
                     </td>
-                    <td className="px-6 py-4 border-r border-[#141414]/10">
+                    <td className="px-3 sm:px-6 py-4 border-r border-[#141414]/10">
                         <span className="text-[10px] font-mono opacity-60 uppercase">{product.packaging}</span>
                     </td>
-                    <td className="px-6 py-4 border-r border-[#141414]/10 font-mono text-xs">₱{(product.purchasePrice || 0).toLocaleString()}</td>
-                    <td className="px-6 py-4 border-r border-[#141414]/10 font-mono font-bold">₱{(product.sellingPrice || 0).toLocaleString()}</td>
-                    <td className="px-6 py-4 border-r border-[#141414]/10">
+                    <td className="px-3 sm:px-6 py-4 border-r border-[#141414]/10 font-mono text-xs">₱{(product.purchasePrice || 0).toLocaleString()}</td>
+                    <td className="px-3 sm:px-6 py-4 border-r border-[#141414]/10 font-mono font-bold">₱{(product.sellingPrice || 0).toLocaleString()}</td>
+                    <td className="px-3 sm:px-6 py-4 border-r border-[#141414]/10">
                       <span className={`inline-flex items-center px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest border ${
                         product.currentStock < (product.lowStockThreshold || 10) 
                           ? 'border-red-500 text-red-600 bg-red-50' 
@@ -226,7 +228,7 @@ export default function Inventory() {
                         {product.currentStock} UNITS
                       </span>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-3 sm:px-6 py-4">
                       <div className="flex justify-center gap-2">
                         <button onClick={() => openModal(product)} className="p-1.5 border border-[#141414] hover:bg-[#141414] hover:text-[#E4E3E0] transition-all">
                           <Edit2 className="h-3 w-3" />
@@ -273,13 +275,13 @@ export default function Inventory() {
                 <button onClick={closeModal} className="p-1 hover:bg-[#E4E3E0] transition-colors"><X className="h-5 w-5" /></button>
               </div>
 
-              <form onSubmit={handleSubmit(onSubmit)} className="p-8 space-y-6">
-                <div className="grid grid-cols-3 gap-6">
+              <form onSubmit={handleSubmit(onSubmit)} className="p-6 sm:p-8 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                   <div className="col-span-1">
                     <label className="block text-[10px] font-mono font-bold uppercase tracking-widest text-[#141414] opacity-50 mb-1.5">REF#</label>
                     <input {...register('productNo')} className="w-full border-2 border-[#141414] bg-transparent px-4 py-3 text-sm font-mono font-bold uppercase focus:bg-[#E4E3E0] focus:outline-none transition-all placeholder:opacity-20" placeholder="e.g. 66" />
                   </div>
-                  <div className="col-span-2">
+                  <div className="col-span-1 sm:col-span-2">
                     <label className="block text-[10px] font-mono font-bold uppercase tracking-widest text-[#141414] opacity-50 mb-1.5">Item Nomenclature</label>
                     <input {...register('itemName', { required: true })} className="w-full border-2 border-[#141414] bg-transparent px-4 py-3 text-sm font-bold uppercase focus:bg-[#E4E3E0] focus:outline-none transition-all placeholder:opacity-20" placeholder="e.g. STERILE GLOVES" />
                   </div>
@@ -288,7 +290,7 @@ export default function Inventory() {
                   <label className="block text-[10px] font-mono font-bold uppercase tracking-widest text-[#141414] opacity-50 mb-1.5">Unit Packaging</label>
                   <input {...register('packaging', { required: true })} className="w-full border-2 border-[#141414] bg-transparent px-4 py-3 text-sm font-bold uppercase focus:bg-[#E4E3E0] focus:outline-none" placeholder="e.g. PACK OF 50" />
                 </div>
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-[10px] font-mono font-bold uppercase tracking-widest text-[#141414] opacity-50 mb-1.5">Purchase Price</label>
                     <div className="relative">
@@ -304,7 +306,7 @@ export default function Inventory() {
                     </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-[10px] font-mono font-bold uppercase tracking-widest text-[#141414] opacity-50 mb-1.5">Initial Qty</label>
                     <input type="number" {...register('currentStock', { required: true })} className="w-full border-2 border-[#141414] bg-transparent px-4 py-3 text-sm font-mono font-bold focus:bg-[#E4E3E0] focus:outline-none" placeholder="0" />

@@ -215,33 +215,33 @@ export default function ProductList() {
   return (
     <div className="bg-[#E4E3E0] min-h-screen">
       {/* Product List Header */}
-      <div className="border-b border-[#141414] bg-white p-8 flex justify-between items-end">
+      <div className="border-b border-[#141414] bg-white p-4 sm:p-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div>
-          <h2 className="text-4xl font-bold uppercase tracking-tighter italic leading-none mb-2">Master Catalog</h2>
+          <h2 className="text-2xl sm:text-4xl font-bold uppercase tracking-tighter italic leading-none mb-2">Master Catalog</h2>
           <p className="text-[10px] font-mono font-bold opacity-40 uppercase tracking-widest">Consolidated Medical Reference System</p>
         </div>
-        <div className="flex gap-4">
+        <div className="flex flex-wrap gap-2 sm:gap-4 w-full md:w-auto">
           {isAdmin && categories.length === 0 && (
             <button 
               onClick={seedData}
-              className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white text-[10px] font-bold uppercase tracking-tight hover:bg-amber-700 transition-all shadow-[4px_4px_0px_0px_rgba(20,20,20,1)] active:translate-x-1 active:translate-y-1 active:shadow-none"
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-amber-600 text-white text-[10px] font-bold uppercase tracking-tight hover:bg-amber-700 transition-all shadow-[4px_4px_0px_0px_rgba(20,20,20,1)] active:translate-x-1 active:translate-y-1 active:shadow-none"
             >
-              <RefreshCw className="h-3 w-3" /> Initialize Reference
+              <RefreshCw className="h-3 w-3" /> <span className="whitespace-nowrap">Initialize</span>
             </button>
           )}
           <button 
             onClick={addCategory}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-[10px] font-bold uppercase tracking-tight hover:bg-blue-700 transition-all shadow-[4px_4px_0px_0px_rgba(20,20,20,1)] active:translate-x-1 active:translate-y-1 active:shadow-none"
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white text-[10px] font-bold uppercase tracking-tight hover:bg-blue-700 transition-all shadow-[4px_4px_0px_0px_rgba(20,20,20,1)] active:translate-x-1 active:translate-y-1 active:shadow-none"
           >
-            <FolderPlus className="h-3 w-3" /> Add Table
+            <FolderPlus className="h-3 w-3" /> <span className="whitespace-nowrap">Add Table</span>
           </button>
-          <button className="flex items-center gap-2 px-6 py-3 bg-[#141414] text-[#E4E3E0] text-[10px] font-bold uppercase tracking-tight hover:opacity-90 transition-all shadow-[8px_8px_0px_0px_rgba(20,20,20,0.2)]">
-            <Download className="h-4 w-4" /> Export Document
+          <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 md:px-6 py-2 md:py-3 bg-[#141414] text-[#E4E3E0] text-[10px] font-bold uppercase tracking-tight hover:opacity-90 transition-all shadow-[4px_4px_0px_0px_rgba(20,20,20,0.2)] md:shadow-[8px_8px_0px_0px_rgba(20,20,20,0.2)]">
+            <Download className="h-4 w-4" /> <span className="whitespace-nowrap">Export</span>
           </button>
         </div>
       </div>
 
-      <div className="p-8 space-y-12 pb-24">
+      <div className="p-4 sm:p-8 space-y-8 sm:space-y-12 pb-24">
         {categories.map(category => {
           const categoryItems = items.filter(i => i.category === category.name);
           return (

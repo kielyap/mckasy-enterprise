@@ -69,10 +69,10 @@ export default function Deliveries() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-8 border-b border-[#141414] bg-white">
+      <div className="p-4 sm:p-8 border-b border-[#141414] bg-white">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
-            <h2 className="text-3xl font-bold uppercase tracking-tighter leading-none mb-2">Hospital Deliveries</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tighter leading-none mb-2">Hospital Deliveries</h2>
             <p className="text-[10px] font-mono uppercase opacity-50 tracking-widest">Active Logistics // Real-time Tracking</p>
           </div>
           <div className="relative w-full md:w-96">
@@ -88,7 +88,7 @@ export default function Deliveries() {
         </div>
       </div>
 
-      <div className="p-8 grid gap-6 grid-cols-1 xl:grid-cols-2">
+      <div className="p-4 sm:p-8 grid gap-6 grid-cols-1 xl:grid-cols-2">
         {filteredDeliveries.map((delivery) => (
           <div key={delivery.id} className="border-4 border-[#141414] bg-white shadow-[8px_8px_0px_0px_rgba(20,20,20,1)] p-6 transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none">
             <div className="flex justify-between items-start mb-6">
@@ -115,7 +115,7 @@ export default function Deliveries() {
               </div>
             </div>
 
-            <div className="grid grid-cols-4 gap-2 pt-4 border-t border-[#141414]/10">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-4 border-t border-[#141414]/10">
               {(['Processing', 'Dispensing', 'In Transit', 'Delivered'] as const).map((s) => (
                 <button
                   key={s}

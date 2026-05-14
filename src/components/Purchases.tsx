@@ -155,34 +155,36 @@ export default function Purchases() {
 
   return (
     <div className="space-y-6">
-      <div className="p-8 border-b border-[#141414] bg-white flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="p-4 sm:p-8 border-b border-[#141414] bg-white flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tighter uppercase leading-none italic">Purchase History</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tighter uppercase leading-none italic">Purchase History</h2>
           <p className="text-[10px] font-mono mt-2 opacity-50 uppercase tracking-widest leading-none">Supplier Acquisitions & Expense Ledger</p>
         </div>
-        <div className="flex items-center gap-4">
-            <div className="px-4 py-2 border-2 border-[#141414] bg-[#E4E3E0] flex flex-col justify-center">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto">
+            <div className="px-4 py-2 border-2 border-[#141414] bg-[#E4E3E0] flex flex-col justify-center w-full sm:w-auto">
                 <span className="text-[8px] font-bold opacity-50 uppercase">Total Procurement</span>
                 <span className="text-sm font-mono font-bold">₱{(totalPurchaseAmount || 0).toLocaleString()}</span>
             </div>
-            <div className="flex gap-2">
-                <ImportIntelligence 
-                    collectionName="purchases" 
-                    title="Ledger" 
-                    schemaDetails={purchaseSchema} 
-                />
+            <div className="flex gap-2 w-full sm:w-auto">
+                <div className="flex-1 sm:flex-none">
+                    <ImportIntelligence 
+                        collectionName="purchases" 
+                        title="Ledger" 
+                        schemaDetails={purchaseSchema} 
+                    />
+                </div>
                 <button 
                     onClick={() => setIsModalOpen(true)}
-                    className="flex items-center justify-center gap-2 border-2 border-[#141414] bg-[#141414] px-6 py-2 text-[10px] font-bold uppercase text-[#E4E3E0] hover:bg-transparent hover:text-[#141414] transition-all"
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 border-2 border-[#141414] bg-[#141414] px-4 sm:px-6 py-2 text-[10px] font-bold uppercase text-[#E4E3E0] hover:bg-transparent hover:text-[#141414] transition-all"
                 >
                     <Plus className="h-4 w-4" />
-                    Record Purchase
+                    <span className="whitespace-nowrap">Record Purchase</span>
                 </button>
             </div>
         </div>
       </div>
 
-      <div className="p-8 space-y-8">
+      <div className="p-4 sm:p-8 space-y-8">
         <div className="relative">
           <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#141414] opacity-40" />
           <input
@@ -194,8 +196,8 @@ export default function Purchases() {
           />
         </div>
 
-        <div className="border border-[#141414] bg-white">
-          <table className="w-full border-collapse text-left">
+        <div className="border border-[#141414] bg-white overflow-x-auto">
+          <table className="w-full border-collapse text-left min-w-[800px]">
             <thead>
               <tr className="bg-[#141414] text-[#E4E3E0] text-[10px] font-bold uppercase tracking-widest">
                 <th className="px-6 py-4 border-r border-[#E4E3E0]/10 cursor-pointer hover:bg-[#141414]/80 transition-colors" onClick={() => handleSort('date')}>
@@ -296,8 +298,8 @@ export default function Purchases() {
                 <button onClick={closeModal} className="p-1 hover:bg-[#E4E3E0]"><Plus className="h-5 w-5 rotate-45" /></button>
               </div>
 
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-                <div className="grid grid-cols-2 gap-4">
+              <form onSubmit={handleSubmit(onSubmit)} className="p-6 sm:p-8 space-y-5 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                         <label className="text-[9px] font-bold uppercase opacity-50 flex items-center gap-1">
                             <Calendar className="h-3 w-3" /> Procurement Date

@@ -110,28 +110,30 @@ export default function CRM() {
 
   return (
     <div className="space-y-6">
-      <div className="p-8 border-b border-[#141414] bg-white flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="p-4 sm:p-8 border-b border-[#141414] bg-white flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tighter uppercase leading-none italic">CRM Database</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tighter uppercase leading-none italic">CRM Database</h2>
           <p className="text-[10px] font-mono mt-2 opacity-50 uppercase tracking-widest leading-none">Hospital & Clinic Partner Registry</p>
         </div>
-        <div className="flex gap-4">
-          <ImportIntelligence 
-            collectionName="customers" 
-            title="Partners" 
-            schemaDetails={customerSchema} 
-          />
+        <div className="flex flex-wrap gap-3 sm:gap-4 w-full lg:w-auto">
+          <div className="flex-1 lg:flex-none">
+            <ImportIntelligence 
+              collectionName="customers" 
+              title="Partners" 
+              schemaDetails={customerSchema} 
+            />
+          </div>
           <button 
             onClick={() => openModal()}
-            className="flex items-center justify-center gap-2 border-2 border-[#141414] bg-[#141414] px-4 py-2 text-[10px] font-bold uppercase text-[#E4E3E0] hover:bg-transparent hover:text-[#141414] transition-all"
+            className="flex-1 lg:flex-none flex items-center justify-center gap-2 border-2 border-[#141414] bg-[#141414] px-4 py-2 text-[10px] font-bold uppercase text-[#E4E3E0] hover:bg-transparent hover:text-[#141414] transition-all"
           >
             <Plus className="h-4 w-4" />
-            Add New Partner
+            <span className="whitespace-nowrap">Add Partner</span>
           </button>
         </div>
       </div>
 
-      <div className="p-8 space-y-8">
+      <div className="p-4 sm:p-8 space-y-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
           <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#141414] opacity-40" />
@@ -268,9 +270,9 @@ export default function CRM() {
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-h-[70vh] overflow-y-auto px-1 custom-scrollbar">
                 <div className="grid gap-6">
-                  <div className="grid grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="text-[10px] font-mono font-bold uppercase opacity-50 block">Company Name</label>
                       <input
@@ -289,7 +291,7 @@ export default function CRM() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="text-[10px] font-mono font-bold uppercase opacity-50 block">E-mail Address</label>
                       <input

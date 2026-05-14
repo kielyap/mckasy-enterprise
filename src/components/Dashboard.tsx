@@ -336,31 +336,31 @@ export default function Dashboard() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-12 auto-rows-min gap-0">
       {/* 01 / Analytics */}
-      <section className="col-span-1 md:col-span-8 border-r border-b border-[#141414] p-8 flex flex-col justify-between bg-white min-h-[300px]">
+      <section className="col-span-1 md:col-span-8 border-r border-b border-[#141414] p-4 sm:p-8 flex flex-col justify-between bg-white min-h-[300px]">
         <div className="flex justify-between items-start">
-          <h2 className="text-[11px] font-mono uppercase opacity-50 tracking-widest">Monthly Profit Analytics</h2>
-          <span className="text-[10px] bg-[#141414] text-[#E4E3E0] px-2 py-1 uppercase font-bold">Financial Health</span>
+          <h2 className="text-[11px] font-mono uppercase opacity-50 tracking-widest leading-tight">Monthly Profit Analytics</h2>
+          <span className="text-[10px] bg-[#141414] text-[#E4E3E0] px-2 py-1 uppercase font-bold shrink-0 ml-4">Financial Health</span>
         </div>
         
-        <div className="flex flex-col gap-2 my-8">
-          <span className="text-6xl md:text-8xl font-light tracking-tighter leading-none">
+        <div className="flex flex-col gap-2 my-6 sm:my-8">
+          <span className="text-4xl sm:text-6xl md:text-8xl font-light tracking-tighter leading-none">
             ₱{(monthlyStats.profit || 0).toLocaleString()}
           </span>
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center gap-4 sm:gap-6">
             <div className="flex items-center gap-2">
               <span className="text-emerald-600 text-xs font-mono font-bold uppercase tracking-tight">+ {margin.toFixed(1)}% MARGIN</span>
-              <span className="text-[10px] opacity-40 uppercase font-bold tracking-widest">Sales Profit</span>
+              <span className="text-[10px] opacity-40 uppercase font-bold tracking-widest hidden sm:inline">Sales Profit</span>
             </div>
-            <div className="flex items-center gap-2 border-l border-[#141414] pl-6">
+            <div className="flex items-center gap-2 border-l border-[#141414] pl-4 sm:pl-6">
                <span className={`text-xs font-mono font-bold uppercase tracking-tight ${netCashFlow >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
                  ₱{(netCashFlow || 0).toLocaleString()}
                </span>
-               <span className="text-[10px] opacity-40 uppercase font-bold tracking-widest">Net Cash Flow (Rev - Pur)</span>
+               <span className="text-[10px] opacity-40 uppercase font-bold tracking-widest hidden sm:inline">Net Cash Flow</span>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-6 border-t border-[#141414] pt-6">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 border-t border-[#141414] pt-6">
           <div className="flex flex-col">
             <span className="text-[10px] uppercase opacity-50 font-bold mb-1">Monthly Rev.</span>
             <span className="font-mono text-sm font-bold">₱{(monthlyStats.revenue || 0).toLocaleString()}</span>
@@ -427,15 +427,15 @@ export default function Dashboard() {
       </section>
 
       {/* 03 / Hospital Profitability Breakdown */}
-      <section className="col-span-1 md:col-span-12 lg:col-span-6 border-r border-[#141414] p-8 bg-white max-h-[500px] overflow-hidden flex flex-col">
-        <div className="flex justify-between items-start mb-8 shrink-0">
+      <section className="col-span-1 md:col-span-12 lg:col-span-6 border-r border-[#141414] p-4 sm:p-8 bg-white max-h-[500px] overflow-hidden flex flex-col">
+        <div className="flex justify-between items-start mb-6 sm:mb-8 shrink-0">
           <h2 className="text-[11px] font-mono uppercase opacity-50">Partner Hospital Performance</h2>
           <TrendingUp className="h-4 w-4 opacity-30" />
         </div>
         
         <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
           <div className="space-y-4">
-              {(Object.values(hospitalStats) as Array<{ name: string, revenue: number, profit: number, count: number }>)
+              {Object.values(hospitalStats)
                 .sort((a, b) => b.profit - a.profit)
                 .map((stat, idx) => {
                   const partnerMargin = stat.revenue > 0 ? (stat.profit / stat.revenue) * 100 : 0;
